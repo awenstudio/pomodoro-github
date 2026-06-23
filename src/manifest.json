@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Pomodoro GitHub",
+  "name": "Pawodoro",
   "description": "Developer-focused Pomodoro timer with Google account sync",
   "version": "1.0.0",
   "permissions": [

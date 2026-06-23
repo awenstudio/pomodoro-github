@@ -3,12 +3,12 @@
  *  User picks a starter pet and names it.
  * ───────────────────────────────────────────────────── */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { SPECIES_CONFIG } from '@/lib/pet-system';
 import type { PetSpecies } from '@/lib/pet-system';
 
 interface PetCreatorProps {
-  onCreate: (species: PetSpecies, name: string) => void;
+  onCreate: (species: PetSpecies, name: string) => Promise<boolean>;
 }
 
 const STARTER_PETS: PetSpecies[] = ['shiba', 'cat', 'rabbit', 'fox'];
@@ -16,15 +16,29 @@ const STARTER_PETS: PetSpecies[] = ['shiba', 'cat', 'rabbit', 'fox'];
 export function PetCreator({ onCreate }: PetCreatorProps) {
   const [selected, setSelected] = useState<PetSpecies>('shiba');
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreate = () => {
-    if (!name.trim()) return;
-    onCreate(selected, name.trim());
-  };
+  const handleCreate = useCallback(async () => {
+    if (!name.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const ok = await onCreate(selected, name.trim());
+      if (!ok) {
+        setError('Something went wrong. Try reloading the extension.');
+      }
+    } catch {
+      setError('Connection failed. Please reload the extension.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selected, name, loading, onCreate]);
 
   return (
     <div className="flex flex-col items-center gap-5 p-4 animate-fade-in">
       <div className="text-center">
+        <span className="text-3xl mb-2 block">🐾</span>
         <h2 className="text-lg font-semibold text-white mb-1">Choose Your Pet</h2>
         <p className="text-xs text-gray-400">
           Your companion will grow as you focus.
@@ -65,19 +79,33 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
           placeholder="e.g. Mochi, Luna, Pixel..."
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           maxLength={20}
           autoFocus
         />
       </div>
 
+      {/* Error message */}
+      {error && (
+        <p className="text-xs text-red-400 text-center animate-fade-in">{error}</p>
+      )}
+
       {/* Create button */}
       <button
         onClick={handleCreate}
-        disabled={!name.trim()}
+        disabled={!name.trim() || loading}
         className="btn-primary w-full max-w-[240px] py-2.5 text-sm
-                   disabled:opacity-40 disabled:cursor-not-allowed"
+                   disabled:opacity-40 disabled:cursor-not-allowed
+                   flex items-center justify-center gap-2"
       >
-        Start Together 🍅
+        {loading ? (
+          <>
+            <span className="animate-spin text-sm">⏳</span>
+            <span>Connecting...</span>
+          </>
+        ) : (
+          'Start Together 🍅'
+        )}
       </button>
     </div>
   );

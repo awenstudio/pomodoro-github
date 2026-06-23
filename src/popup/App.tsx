@@ -38,9 +38,7 @@ export default function App() {
     setOnboarded(true);
   }, []);
 
-  const handleCreatePet = useCallback(async (species: string, name: string) => {
-    await timer.createPet(species, name);
-  }, [timer.createPet]);
+
 
   const handleTabChange = useCallback((newTab: Tab) => {
     if (newTab === activeTab) return;
@@ -76,7 +74,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="text-lg">🍅</span>
             <h1 className="text-sm font-semibold text-white tracking-tight">
-              Pomodoro
+              Pawodoro
             </h1>
           </div>
           {isLoggedIn && (
@@ -122,7 +120,17 @@ export default function App() {
           >
             <ErrorBoundary>
               {activeTab === 'timer' && (
-                timer.pet ? <Timer /> : <PetCreator onCreate={handleCreatePet} />
+                timer.pet ? <Timer /> : (
+                  <PetCreator
+                    onCreate={async (species, name) => {
+                      try {
+                        return await timer.createPet(species, name);
+                      } catch {
+                        return false;
+                      }
+                    }}
+                  />
+                )
               )}
               {activeTab === 'stats' && <Stats />}
               {activeTab === 'settings' && <Settings />}
