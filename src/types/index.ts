@@ -39,6 +39,12 @@ export interface StreakData {
   lastActiveDate: string; // YYYY-MM-DD
 }
 
+export interface GoogleUser {
+  email: string;
+  name: string;
+  picture: string;
+}
+
 export interface Settings {
   // Timer durations (seconds)
   workDuration: number;
@@ -55,9 +61,8 @@ export interface Settings {
   soundEnabled: boolean;
   notificationEnabled: boolean;
 
-  // GitHub
-  githubToken: string | null;
-  gistId: string | null;
+  // Google account (populated after login)
+  googleUser: GoogleUser | null;
   autoSync: boolean;
   syncIntervalMinutes: number;
 }
@@ -72,8 +77,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoStartWork: false,
   soundEnabled: true,
   notificationEnabled: true,
-  githubToken: null,
-  gistId: null,
+  googleUser: null,
   autoSync: true,
   syncIntervalMinutes: 5,
 };

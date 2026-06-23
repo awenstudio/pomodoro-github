@@ -11,12 +11,7 @@ export const STORAGE_KEY_STREAK = 'pomodoro_streak';
 export const STORAGE_KEY_SETTINGS = 'pomodoro_settings';
 export const STORAGE_KEY_SYNC = 'pomodoro_sync_state';
 
-export const GIST_FILENAME = 'pomodoro-data.json';
-export const GIST_DESCRIPTION = 'Pomodoro GitHub — Sync Data (do not delete)';
-
 export const TICK_INTERVAL_SECONDS = 1;
-export const SYNC_RETRY_BASE_MS = 1000;
-export const SYNC_MAX_RETRIES = 5;
 
 export const SESSION_COLORS: Record<string, string> = {
   work: '#ef4444',

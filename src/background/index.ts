@@ -24,7 +24,7 @@ import {
   createEmptyDailyStats,
 } from '@/lib/storage';
 import { showNotification } from '@/lib/notifications';
-import { performSync } from '@/lib/github-sync';
+import { performDriveSync } from '@/lib/google-drive-sync';
 import { SYNC_ALARM_NAME } from '@/lib/constants';
 
 /* ── State ─────────────────────────────────────────── */
@@ -137,7 +137,7 @@ function stopTick(): void {
 /* ── Alarm Management ──────────────────────────────── */
 
 function scheduleSyncAlarm(settings: Settings): void {
-  if (settings.autoSync && settings.githubToken) {
+  if (settings.autoSync && settings.googleUser) {
     chrome.alarms.create(SYNC_ALARM_NAME, {
       periodInMinutes: settings.syncIntervalMinutes,
     });
@@ -147,7 +147,7 @@ function scheduleSyncAlarm(settings: Settings): void {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === SYNC_ALARM_NAME) {
     try {
-      await performSync();
+      await performDriveSync();
     } catch {
       // Sync errors are logged in sync state
     }
@@ -320,7 +320,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'SYNC_NOW': {
-      const syncState = await performSync();
+      const syncState = await performDriveSync();
       return { success: true, data: syncState };
     }
 
