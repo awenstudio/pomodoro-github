@@ -1,6 +1,9 @@
 /* ─────────────────────────────────────────────────────
- *  App — Root component with tab navigation,
- *  onboarding, and error boundary.
+ *  App — Root component.
+ *
+ *  Design: Timer is the default tab. Everything works
+ *  without login. Google sync is optional, surfaced
+ *  gently in Settings.
  * ───────────────────────────────────────────────────── */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -32,11 +35,6 @@ export default function App() {
     setOnboarded(true);
   }, []);
 
-  const handleConnectGoogle = useCallback(async () => {
-    // Will be handled by Settings after onboarding
-    setActiveTab('settings');
-  }, []);
-
   // Loading state
   if (onboarded === null) {
     return (
@@ -50,18 +48,17 @@ export default function App() {
   if (!onboarded) {
     return (
       <ErrorBoundary>
-        <Onboarding
-          onComplete={handleOnboardingComplete}
-          onConnectGoogle={handleConnectGoogle}
-        />
+        <Onboarding onComplete={handleOnboardingComplete} />
       </ErrorBoundary>
     );
   }
 
+  const isLoggedIn = !!timer.settings.googleUser;
+
   return (
     <ErrorBoundary>
       <div className="flex flex-col min-h-[520px]">
-        {/* Header */}
+        {/* Header — minimal, no login pressure */}
         <header className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <span className="text-lg">🍅</span>
@@ -70,40 +67,40 @@ export default function App() {
             </h1>
           </div>
 
-          {/* Sync indicator */}
-          <button
-            onClick={timer.syncNow}
-            className="btn-ghost p-1.5"
-            title={
-              timer.syncState.status === 'success'
-                ? `Last synced: ${new Date(timer.syncState.lastSyncAt!).toLocaleTimeString()}`
-                : timer.syncState.status === 'error'
-                  ? `Sync error: ${timer.syncState.error}`
-                  : 'Click to sync'
-            }
-          >
-            <svg
-              className={`w-4 h-4 ${
-                timer.syncState.status === 'syncing'
-                  ? 'animate-spin text-blue-400'
-                  : timer.syncState.status === 'success'
-                    ? 'text-green-400'
-                    : timer.syncState.status === 'error'
-                      ? 'text-red-400'
-                      : 'text-gray-500'
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+          {/* Sync indicator — only visible when logged in */}
+          {isLoggedIn && (
+            <button
+              onClick={timer.syncNow}
+              className="btn-ghost p-1.5"
+              title={
+                timer.syncState.status === 'success'
+                  ? `Synced ${new Date(timer.syncState.lastSyncAt!).toLocaleTimeString()}`
+                  : timer.syncState.status === 'error'
+                    ? `Sync error: ${timer.syncState.error}`
+                    : 'Click to sync'
+              }
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
+              <svg
+                className={`w-4 h-4 ${
+                  timer.syncState.status === 'syncing'
+                    ? 'animate-spin text-blue-400'
+                    : timer.syncState.status === 'success'
+                      ? 'text-green-400'
+                      : 'text-gray-500'
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          )}
         </header>
 
         {/* Tab content */}
