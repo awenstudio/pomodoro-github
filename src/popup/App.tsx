@@ -13,6 +13,7 @@ type Tab = 'timer' | 'stats' | 'settings';
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('timer');
   const timer = useTimer();
+  const { syncState: syncInfo, syncNow } = timer;
 
   return (
     <div className="flex flex-col min-h-[520px]">
@@ -27,23 +28,23 @@ export default function App() {
 
         {/* Sync indicator */}
         <button
-          onClick={timer.syncNow}
+          onClick={syncNow}
           className="btn-ghost p-1.5"
           title={
-            timer.syncState.status === 'success'
-              ? `Last synced: ${new Date(timer.syncState.lastSyncAt!).toLocaleTimeString()}`
-              : timer.syncState.status === 'error'
-                ? `Sync error: ${timer.syncState.error}`
+            syncInfo.status === 'success'
+              ? `Last synced: ${new Date(syncInfo.lastSyncAt!).toLocaleTimeString()}`
+              : syncInfo.status === 'error'
+                ? `Sync error: ${syncInfo.error}`
                 : 'Click to sync'
           }
         >
           <svg
             className={`w-4 h-4 ${
-              timer.syncState.status === 'syncing'
+              syncInfo.status === 'syncing'
                 ? 'animate-spin text-blue-400'
-                : timer.syncState.status === 'success'
+                : syncInfo.status === 'success'
                   ? 'text-green-400'
-                  : timer.syncState.status === 'error'
+                  : syncInfo.status === 'error'
                     ? 'text-red-400'
                     : 'text-gray-500'
             }`}

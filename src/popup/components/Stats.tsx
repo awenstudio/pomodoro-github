@@ -3,9 +3,7 @@
  *  heatmap, and achievement display.
  * ───────────────────────────────────────────────────── */
 
-import { useMemo } from 'react';
 import { useTimer } from '../hooks/useTimer';
-import type { DailyStats } from '@/types';
 
 export function Stats() {
   const { todayStats, streak, settings } = useTimer();

@@ -53,7 +53,7 @@ interface TimerStore {
   isBreak: boolean;
 }
 
-export const useTimerStore = create<TimerStore>((set, get) => ({
+export const useTimerStore = create<TimerStore>((set) => ({
   // Initial values
   timer: createInitialState(DEFAULT_SETTINGS),
   timerStatus: 'idle',

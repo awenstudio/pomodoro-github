@@ -8,7 +8,7 @@ import { useTimer } from '../hooks/useTimer';
 import { testToken } from '@/lib/github-sync';
 
 export function Settings() {
-  const { settings, updateSettings, clearData, syncNow, syncState } = useTimer();
+  const { settings, updateSettings, clearData, syncNow, syncState: syncInfo } = useTimer();
   const [localSettings, setLocalSettings] = useState({ ...settings });
   const [githubStatus, setGithubStatus] = useState<
     'idle' | 'testing' | 'valid' | 'invalid'
@@ -174,7 +174,7 @@ export function Settings() {
             </div>
             <div className="flex gap-2">
               <button onClick={syncNow} className="btn-secondary text-xs px-3 py-1.5">
-                {syncState.status === 'syncing' ? 'Syncing...' : 'Sync Now'}
+                {syncInfo.status === 'syncing' ? 'Syncing...' : 'Sync Now'}
               </button>
               <button
                 onClick={handleDisconnect}

@@ -4,7 +4,7 @@
  * ───────────────────────────────────────────────────── */
 
 import { Octokit } from '@octokit/rest';
-import type { SyncPayload, Settings, DailyStats, StreakData, SyncState } from '@/types';
+import type { SyncPayload, SyncState } from '@/types';
 import {
   GIST_FILENAME,
   GIST_DESCRIPTION,

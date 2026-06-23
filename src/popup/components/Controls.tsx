@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useTimer } from '../hooks/useTimer';
 
 export function Controls() {
-  const { isRunning, isPaused, isIdle, start, pause, resume, skip, reset } =
+  const { isRunning, isPaused, start, pause, resume, skip, reset } =
     useTimer();
 
   // Keyboard shortcuts

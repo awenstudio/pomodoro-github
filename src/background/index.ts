@@ -10,7 +10,6 @@ import type {
   DailyStats,
   MessageType,
   MessageResponse,
-  TaskRef,
   Settings,
 } from '@/types';
 import { createInitialState, timerReducer } from '@/lib/timer-engine';
@@ -26,58 +25,51 @@ import {
 } from '@/lib/storage';
 import { showNotification } from '@/lib/notifications';
 import { performSync } from '@/lib/github-sync';
-import {
-  ALARM_NAME,
-  SYNC_ALARM_NAME,
-} from '@/lib/constants';
+import { SYNC_ALARM_NAME } from '@/lib/constants';
 
 /* ── State ─────────────────────────────────────────── */
 
 let currentState: TimerState | null = null;
 let tickInterval: ReturnType<typeof setInterval> | null = null;
+let cachedSettings: Settings | null = null;
 
 /* ── Initialization ────────────────────────────────── */
 
 chrome.runtime.onInstalled.addListener(async () => {
-  const settings = await loadSettings();
+  cachedSettings = await loadSettings();
   currentState = await loadTimerState();
   if (!currentState) {
-    currentState = createInitialState(settings);
+    currentState = createInitialState(cachedSettings);
     await saveTimerState(currentState);
   }
   updateBadge(currentState);
-  scheduleSyncAlarm(settings);
+  scheduleSyncAlarm(cachedSettings);
 });
 
 chrome.runtime.onStartup.addListener(async () => {
-  const settings = await loadSettings();
+  cachedSettings = await loadSettings();
   currentState = await loadTimerState();
   if (!currentState) {
-    currentState = createInitialState(settings);
+    currentState = createInitialState(cachedSettings);
     await saveTimerState(currentState);
   }
 
   // Check if timer was running before shutdown
   if (currentState.status === 'running') {
-    // Timer was interrupted — mark as paused
     currentState = { ...currentState, status: 'paused' };
     await saveTimerState(currentState);
   }
 
   updateBadge(currentState);
-  scheduleSyncAlarm(settings);
+  scheduleSyncAlarm(cachedSettings);
 });
 
-/* ── Alarm Management ──────────────────────────────── */
-
-let cachedSettings: Settings | null = null;
+/* ── Timer Tick ────────────────────────────────────── */
 
 function startTick(): void {
   stopTick();
-  // Cache settings once per session to avoid per-tick storage reads
-  loadSettings().then((s) => (cachedSettings = s));
+  if (!cachedSettings) loadSettings().then((s) => (cachedSettings = s));
 
-  // Use setInterval for precise countdown (alarms have 30s minimum)
   tickInterval = setInterval(async () => {
     if (!currentState || currentState.status !== 'running') {
       stopTick();
@@ -85,7 +77,7 @@ function startTick(): void {
     }
 
     if (!cachedSettings) cachedSettings = await loadSettings();
-    const result = timerReducer(currentState, { type: 'TICK', settings: cachedSettings });
+    const result = timerReducer(currentState, { type: 'TICK' }, cachedSettings);
     currentState = result.state;
     await saveTimerState(currentState);
     updateBadge(currentState);
@@ -96,7 +88,7 @@ function startTick(): void {
         case 'SESSION_COMPLETE': {
           const now = new Date();
           const dateStr = now.toISOString().split('T')[0];
-          const sessionDuration = currentState ? currentState.totalTime : settings.workDuration;
+          const sessionDuration = currentState?.totalTime || cachedSettings.workDuration;
           const session: TimerSession = {
             id: crypto.randomUUID(),
             type: effect.sessionType,
@@ -106,7 +98,7 @@ function startTick(): void {
             elapsed: sessionDuration,
             completed: true,
             interrupted: false,
-            task: currentState.currentTask,
+            task: currentState?.currentTask || null,
           };
 
           await addSession(session);
@@ -142,7 +134,9 @@ function stopTick(): void {
   }
 }
 
-function scheduleSyncAlarm(settings: { autoSync: boolean; syncIntervalMinutes: number }): void {
+/* ── Alarm Management ──────────────────────────────── */
+
+function scheduleSyncAlarm(settings: Settings): void {
   if (settings.autoSync && settings.githubToken) {
     chrome.alarms.create(SYNC_ALARM_NAME, {
       periodInMinutes: settings.syncIntervalMinutes,
@@ -186,10 +180,10 @@ chrome.runtime.onMessage.addListener(
 );
 
 async function handleMessage(msg: MessageType): Promise<MessageResponse> {
-  const settings = await loadSettings();
+  if (!cachedSettings) cachedSettings = await loadSettings();
 
   if (!currentState) {
-    currentState = await loadTimerState() || createInitialState(settings);
+    currentState = (await loadTimerState()) || createInitialState(cachedSettings);
   }
 
   switch (msg.type) {
@@ -208,10 +202,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'START': {
-      const result = timerReducer(currentState, {
-        type: 'START',
-        settings,
-      });
+      const result = timerReducer(currentState, { type: 'START' }, cachedSettings);
       currentState = {
         ...result.state,
         currentTask: msg.task || currentState.currentTask,
@@ -223,7 +214,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'PAUSE': {
-      const result = timerReducer(currentState, { type: 'PAUSE', settings });
+      const result = timerReducer(currentState, { type: 'PAUSE' }, cachedSettings);
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
@@ -232,7 +223,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'RESUME': {
-      const result = timerReducer(currentState, { type: 'RESUME', settings });
+      const result = timerReducer(currentState, { type: 'RESUME' }, cachedSettings);
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
@@ -261,13 +252,15 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
           await updateDailyStats(dateStr, (current: DailyStats) => ({
             ...current,
             sessions: [...current.sessions, session],
-            interruptedPomodoros: current.interruptedPomodoros + (currentState!.currentSessionType === 'work' ? 1 : 0),
+            interruptedPomodoros:
+              current.interruptedPomodoros +
+              (currentState!.currentSessionType === 'work' ? 1 : 0),
           }));
         }
       }
 
       stopTick();
-      const result = timerReducer(currentState, { type: 'SKIP', settings });
+      const result = timerReducer(currentState, { type: 'SKIP' }, cachedSettings);
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
@@ -284,7 +277,10 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'RESET': {
       stopTick();
       // Record interrupted session if significant time elapsed
-      if (currentState.status === 'running' || currentState.status === 'paused') {
+      if (
+        currentState.status === 'running' ||
+        currentState.status === 'paused'
+      ) {
         const elapsed = currentState.totalTime - currentState.timeLeft;
         if (elapsed > 10) {
           const session: TimerSession = {
@@ -302,7 +298,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
         }
       }
 
-      const result = timerReducer(currentState, { type: 'RESET', settings });
+      const result = timerReducer(currentState, { type: 'RESET' }, cachedSettings);
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
@@ -312,10 +308,10 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'UPDATE_SETTINGS': {
       const { saveSettings: save } = await import('@/lib/storage');
       await save(msg.settings);
+      cachedSettings = await loadSettings();
       // If timer is idle, update timeLeft to match new duration
       if (currentState.status === 'idle') {
-        const newSettings = await loadSettings();
-        const result = timerReducer(currentState, { type: 'RESET', settings: newSettings });
+        const result = timerReducer(currentState, { type: 'RESET' }, cachedSettings);
         currentState = result.state;
         await saveTimerState(currentState);
         updateBadge(currentState);
@@ -331,7 +327,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'CLEAR_DATA': {
       const { clearAllData: clear } = await import('@/lib/storage');
       await clear();
-      currentState = createInitialState(settings);
+      currentState = createInitialState(cachedSettings);
       await saveTimerState(currentState);
       updateBadge(currentState);
       stopTick();

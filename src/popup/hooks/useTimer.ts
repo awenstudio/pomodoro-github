@@ -157,15 +157,15 @@ export function useTimer() {
     // State (spread from Zustand store — all reactive)
     ...store,
 
-    // Actions
+    // Actions (named to avoid collision with store.syncState)
     start,
     pause,
     resume,
     skip,
     reset,
     syncNow,
+    refreshSync: syncState,
     updateSettings,
     clearData,
-    syncState,
   };
 }

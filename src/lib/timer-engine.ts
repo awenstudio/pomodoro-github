@@ -1,29 +1,38 @@
 /* ─────────────────────────────────────────────────────
  *  Timer Engine — Pure, deterministic state machine.
  *  No side-effects. Works in both SW and popup contexts.
+ *
+ *  Settings are passed as a parameter (not embedded
+ *  in events) so the engine stays pure.
  * ───────────────────────────────────────────────────── */
 
-import type { TimerState, TimerStatus, SessionType, Settings } from '@/types';
+import type { TimerState, SessionType, Settings } from '@/types';
+
+/* ── Events ────────────────────────────────────────── */
 
 export type TimerEvent =
   | { type: 'TICK' }
-  | { type: 'START'; settings: Settings }
+  | { type: 'START' }
   | { type: 'PAUSE' }
   | { type: 'RESUME' }
   | { type: 'SKIP' }
-  | { type: 'RESET'; settings: Settings }
+  | { type: 'RESET' }
   | { type: 'COMPLETE' }
   | { type: 'SESSION_DONE' };
+
+/* ── Effects (side-effects the caller must handle) ── */
+
+export type TimerEffect =
+  | { type: 'SESSION_COMPLETE'; sessionType: SessionType }
+  | { type: 'CYCLE_COMPLETE' }
+  | { type: 'NOTIFY'; title: string; body: string };
 
 export interface TimerEngineResult {
   state: TimerState;
   effects: TimerEffect[];
 }
 
-export type TimerEffect =
-  | { type: 'SESSION_COMPLETE'; sessionType: SessionType }
-  | { type: 'CYCLE_COMPLETE' }
-  | { type: 'NOTIFY'; title: string; body: string };
+/* ── Initial state factory ─────────────────────────── */
 
 export function createInitialState(settings: Settings): TimerState {
   return {
@@ -36,15 +45,18 @@ export function createInitialState(settings: Settings): TimerState {
   };
 }
 
+/* ── Reducer ───────────────────────────────────────── */
+
 export function timerReducer(
   state: TimerState,
   event: TimerEvent,
+  settings: Settings,
 ): TimerEngineResult {
   const effects: TimerEffect[] = [];
 
   switch (event.type) {
     case 'START': {
-      const duration = getDuration(state.currentSessionType, event.settings);
+      const duration = getDuration(state.currentSessionType, settings);
       return {
         state: {
           ...state,
@@ -76,7 +88,7 @@ export function timerReducer(
       if (state.status !== 'running') return { state, effects };
       const newTimeLeft = Math.max(0, state.timeLeft - 1);
       if (newTimeLeft === 0) {
-        return handleComplete(state, event.settings);
+        return handleComplete(state, settings);
       }
       return {
         state: { ...state, timeLeft: newTimeLeft },
@@ -85,16 +97,16 @@ export function timerReducer(
     }
 
     case 'COMPLETE': {
-      return handleComplete(state, event.settings);
+      return handleComplete(state, settings);
     }
 
     case 'SKIP': {
-      const next = advanceSession(state, event.settings);
+      const next = advanceSession(state, settings);
       return { state: next.state, effects: [...effects, ...next.effects] };
     }
 
     case 'RESET': {
-      const duration = getDuration(state.currentSessionType, event.settings);
+      const duration = getDuration(state.currentSessionType, settings);
       return {
         state: {
           ...state,
@@ -107,7 +119,7 @@ export function timerReducer(
     }
 
     case 'SESSION_DONE': {
-      const next = advanceSession(state, event.settings);
+      const next = advanceSession(state, settings);
       return { state: next.state, effects: [...effects, ...next.effects] };
     }
 
@@ -115,6 +127,8 @@ export function timerReducer(
       return { state, effects };
   }
 }
+
+/* ── Internal helpers ──────────────────────────────── */
 
 function handleComplete(
   state: TimerState,
@@ -150,7 +164,6 @@ function handleComplete(
     });
   }
 
-  // Auto-advance to next session
   const next = advanceSession(state, settings);
   return { state: next.state, effects: [...effects, ...next.effects] };
 }
@@ -202,6 +215,8 @@ function getDuration(type: SessionType, settings: Settings): number {
       return settings.longBreakDuration;
   }
 }
+
+/* ── Selectors ─────────────────────────────────────── */
 
 export function getProgress(state: TimerState): number {
   if (state.totalTime === 0) return 0;
