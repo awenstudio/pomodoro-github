@@ -7,6 +7,7 @@ import { Timer } from './components/Timer';
 import { Stats } from './components/Stats';
 import { Settings } from './components/Settings';
 import { Onboarding } from './components/Onboarding';
+import { PetCreator } from './components/PetCreator';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useTimer } from './hooks/useTimer';
 
@@ -36,6 +37,10 @@ export default function App() {
     await chrome.storage.local.set({ [STORAGE_KEY_ONBOARDED]: true });
     setOnboarded(true);
   }, []);
+
+  const handleCreatePet = useCallback(async (species: string, name: string) => {
+    await timer.createPet(species, name);
+  }, [timer.createPet]);
 
   const handleTabChange = useCallback((newTab: Tab) => {
     if (newTab === activeTab) return;
@@ -116,7 +121,9 @@ export default function App() {
             className={`animate-tab-${tabDirection} h-full`}
           >
             <ErrorBoundary>
-              {activeTab === 'timer' && <Timer />}
+              {activeTab === 'timer' && (
+                timer.pet ? <Timer /> : <PetCreator onCreate={handleCreatePet} />
+              )}
               {activeTab === 'stats' && <Stats />}
               {activeTab === 'settings' && <Settings />}
             </ErrorBoundary>

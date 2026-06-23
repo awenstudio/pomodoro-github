@@ -15,6 +15,8 @@ import type {
   MessageResponse,
   Settings,
 } from '@/types';
+import type { Pet, PetSpecies, PetPersonality } from '@/lib/pet-system';
+import { STAGE_XP_REQUIREMENTS } from '@/lib/pet-system';
 import { createInitialState, timerReducer } from '@/lib/timer-engine';
 import {
   loadTimerState,
@@ -28,6 +30,8 @@ import {
   loadAllData,
   createEmptyDailyStats,
   loadDailyStats,
+  loadPet,
+  savePet,
 } from '@/lib/storage';
 import {
   calculateSessionXP,
@@ -174,6 +178,35 @@ async function handleTick(): Promise<void> {
             forgivenessCardsDate: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsDate : todayStr,
             forgivenessCardsUsed: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsUsed : 0,
           }));
+
+          // ── Pet rewards ──
+          const pet = await loadPet();
+          if (pet) {
+            const xpGain = durationMin;
+            const foodGain = Math.floor(durationMin / 10); // 1 food per 10 min
+            const newPetXP = pet.xp + xpGain;
+
+            // Check for stage evolution
+            let newStage = pet.stage;
+            for (const stage of ['baby', 'child', 'teen', 'adult', 'master', 'legend'] as const) {
+              if (newPetXP >= STAGE_XP_REQUIREMENTS[stage]) {
+                newStage = stage;
+              }
+            }
+
+            await savePet({
+              ...pet,
+              xp: newPetXP,
+              level: Math.floor(newPetXP / 100) + 1,
+              stage: newStage,
+              food: pet.food + foodGain,
+              hunger: Math.max(0, pet.hunger - 10), // gets hungry during focus
+              mood: Math.min(100, pet.mood + 3),     // happy when you focus
+              affinity: Math.min(10000, pet.affinity + xpGain),
+              totalFocusMinutes: pet.totalFocusMinutes + durationMin,
+              totalPomodoros: pet.totalPomodoros + 1,
+            });
+          }
         }
         break;
       }
@@ -246,6 +279,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'GET_STATE': {
       const data = await loadAllData();
       const progress = await loadProgress();
+      const pet = await loadPet();
       return {
         success: true,
         data: {
@@ -255,6 +289,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
           streak: data.streak,
           syncState: data.syncState,
           progress,
+          pet,
         },
       };
     }
@@ -401,6 +436,73 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'SYNC_NOW': {
       const syncState = await performDriveSync();
       return { success: true, data: syncState };
+    }
+
+    case 'CREATE_PET': {
+      const personalities: PetPersonality[] = ['lively', 'calm', 'tsundere', 'gentle', 'funny', 'genki', 'scholar'];
+      const newPet: Pet = {
+        id: crypto.randomUUID(),
+        name: msg.name || 'Puppy',
+        species: (msg.species as PetSpecies) || 'shiba',
+        personality: personalities[Math.floor(Math.random() * personalities.length)],
+        stage: 'egg',
+        mood: 80,
+        hunger: 80,
+        affinity: 0,
+        xp: 0,
+        level: 1,
+        coins: 0,
+        food: 5,
+        createdAt: new Date().toISOString(),
+        lastFedAt: new Date().toISOString(),
+        lastInteractedAt: new Date().toISOString(),
+        totalFocusMinutes: 0,
+        totalPomodoros: 0,
+      };
+      await savePet(newPet);
+      return { success: true, data: newPet };
+    }
+
+    case 'FEED_PET': {
+      const pet = await loadPet();
+      if (!pet || pet.food <= 0) return { success: false, error: 'No food' };
+      const fedPet: Pet = {
+        ...pet,
+        hunger: Math.min(100, pet.hunger + 20),
+        mood: Math.min(100, pet.mood + 5),
+        affinity: Math.min(10000, pet.affinity + 10),
+        food: pet.food - 1,
+        lastFedAt: new Date().toISOString(),
+      };
+      await savePet(fedPet);
+      return { success: true, data: fedPet };
+    }
+
+    case 'PLAY_WITH_PET': {
+      const pet = await loadPet();
+      if (!pet) return { success: false, error: 'No pet' };
+      const playedPet: Pet = {
+        ...pet,
+        mood: Math.min(100, pet.mood + 15),
+        hunger: Math.max(0, pet.hunger - 5),
+        affinity: Math.min(10000, pet.affinity + 20),
+        lastInteractedAt: new Date().toISOString(),
+      };
+      await savePet(playedPet);
+      return { success: true, data: playedPet };
+    }
+
+    case 'PET_PET': {
+      const pet = await loadPet();
+      if (!pet) return { success: false, error: 'No pet' };
+      const pettedPet: Pet = {
+        ...pet,
+        mood: Math.min(100, pet.mood + 8),
+        affinity: Math.min(10000, pet.affinity + 15),
+        lastInteractedAt: new Date().toISOString(),
+      };
+      await savePet(pettedPet);
+      return { success: true, data: pettedPet };
     }
 
     case 'CLEAR_DATA': {

@@ -136,6 +136,10 @@ export type MessageType =
   | { type: 'SKIP' }
   | { type: 'RESET' }
   | { type: 'USE_FORGIVENESS' }
+  | { type: 'CREATE_PET'; species: string; name: string }
+  | { type: 'FEED_PET' }
+  | { type: 'PLAY_WITH_PET' }
+  | { type: 'PET_PET' }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<Settings> }
   | { type: 'SYNC_NOW' }
   | { type: 'GET_STATS' }

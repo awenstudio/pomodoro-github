@@ -13,6 +13,7 @@
 import { useEffect, useCallback } from 'react';
 import { useTimerStore } from '@/stores/timer-store';
 import type { MessageType, MessageResponse, TaskRef, PlayerProgress } from '@/types';
+import type { Pet } from '@/lib/pet-system';
 
 /* ── Message helper ────────────────────────────────── */
 
@@ -51,6 +52,7 @@ export function useTimer() {
         if (data.streak) store.setStreak(data.streak as typeof store.streak);
         if (data.syncState) store.setSyncState(data.syncState as typeof store.syncState);
         if (data.progress) store.setProgress(data.progress as PlayerProgress);
+        if (data.pet) store.setPet(data.pet as Pet);
       }
     } catch {
       // Background not ready — UI still works with local state
@@ -168,6 +170,38 @@ export function useTimer() {
     return response.success;
   }, [syncState]);
 
+  const createPet = useCallback(async (species: string, name: string) => {
+    const response = await sendMessage({ type: 'CREATE_PET', species, name });
+    if (response.success && response.data) {
+      store.setPet(response.data as Pet);
+    }
+    return response.success;
+  }, []);
+
+  const feedPet = useCallback(async () => {
+    const response = await sendMessage({ type: 'FEED_PET' });
+    if (response.success && response.data) {
+      store.setPet(response.data as Pet);
+    }
+    return response.success;
+  }, []);
+
+  const playWithPet = useCallback(async () => {
+    const response = await sendMessage({ type: 'PLAY_WITH_PET' });
+    if (response.success && response.data) {
+      store.setPet(response.data as Pet);
+    }
+    return response.success;
+  }, []);
+
+  const petPet = useCallback(async () => {
+    const response = await sendMessage({ type: 'PET_PET' });
+    if (response.success && response.data) {
+      store.setPet(response.data as Pet);
+    }
+    return response.success;
+  }, []);
+
   return {
     ...store,
     start,
@@ -180,5 +214,9 @@ export function useTimer() {
     updateSettings,
     clearData,
     useForgiveness,
+    createPet,
+    feedPet,
+    playWithPet,
+    petPet,
   };
 }

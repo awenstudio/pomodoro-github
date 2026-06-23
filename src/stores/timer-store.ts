@@ -15,6 +15,7 @@ import type {
   SyncState,
   PlayerProgress,
 } from '@/types';
+import type { Pet } from '@/lib/pet-system';
 import { DEFAULT_SETTINGS } from '@/types';
 import { createInitialState, formatTime, getProgress as calcProgress } from '@/lib/timer-engine';
 
@@ -41,6 +42,9 @@ interface TimerStore {
   // Player progress (XP, level)
   progress: PlayerProgress;
 
+  // Pet
+  pet: Pet | null;
+
   // Actions
   setTimerState: (state: TimerState) => void;
   setSettings: (settings: Settings) => void;
@@ -49,6 +53,7 @@ interface TimerStore {
   setSyncState: (state: SyncState) => void;
   setCurrentTask: (task: TaskRef | null) => void;
   setProgress: (progress: PlayerProgress) => void;
+  setPet: (pet: Pet | null) => void;
 
   // Derived
   isRunning: boolean;
@@ -82,6 +87,7 @@ export const useTimerStore = create<TimerStore>((set) => ({
     dailyXPDate: '',
     lastBonusStreak: 0,
   },
+  pet: null,
   isRunning: false,
   isPaused: false,
   isIdle: true,
@@ -114,4 +120,5 @@ export const useTimerStore = create<TimerStore>((set) => ({
   setSyncState: (syncState) => set({ syncState }),
   setCurrentTask: (currentTask) => set({ currentTask }),
   setProgress: (progress) => set({ progress }),
+  setPet: (pet) => set({ pet }),
 }));

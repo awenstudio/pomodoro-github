@@ -1,11 +1,11 @@
 /* ─────────────────────────────────────────────────────
- *  Timer — Main timer display with circular progress,
- *  mode tabs, level/XP display, and controls.
+ *  Timer — Main timer with pet companion.
  * ───────────────────────────────────────────────────── */
 
 import { useTimer } from '../hooks/useTimer';
 import { Controls } from './Controls';
 import { getLevelFromXP, getMaxForgivenessCards } from '@/lib/gamification';
+import { SPECIES_CONFIG } from '@/lib/pet-system';
 import type { SessionType } from '@/types';
 
 const CIRCUMFERENCE = 2 * Math.PI * 88;
@@ -29,6 +29,10 @@ export function Timer() {
     isRunning,
     isPaused,
     progress: playerProgress,
+    pet,
+    feedPet,
+    playWithPet,
+    petPet,
   } = useTimer();
 
   const mode = MODE_CONFIG[currentSessionType];
@@ -36,14 +40,13 @@ export function Timer() {
   const completedToday = todayStats?.completedPomodoros || 0;
   const levelInfo = getLevelFromXP(playerProgress.totalXP);
 
-  // Forgiveness cards
   const todayStr = new Date().toISOString().split('T')[0];
   const cardsUsedToday = playerProgress.forgivenessCardsDate === todayStr ? playerProgress.forgivenessCardsUsed : 0;
   const maxCards = getMaxForgivenessCards(playerProgress.level);
   const cardsRemaining = maxCards - cardsUsedToday;
 
   return (
-    <div className="flex flex-col items-center gap-4 animate-fade-in">
+    <div className="flex flex-col items-center gap-3 animate-fade-in">
       {/* Level & XP bar */}
       <div className="w-full flex items-center gap-2 px-1">
         <span className="text-lg" title={`Level ${levelInfo.level}: ${levelInfo.name}`}>
@@ -81,65 +84,72 @@ export function Timer() {
         ))}
       </div>
 
-      {/* Circular timer */}
-      <div className={`relative w-52 h-52 ${isRunning ? 'animate-float' : ''}`}>
+      {/* Pet + Timer */}
+      <div className="relative w-52 h-52">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
-          {/* Glow background circle (only when running) */}
           {isRunning && (
             <circle
-              cx="100"
-              cy="100"
-              r="88"
-              fill="none"
-              stroke={mode.ringColor}
-              strokeWidth="12"
-              opacity="0.08"
+              cx="100" cy="100" r="88"
+              fill="none" stroke={mode.ringColor}
+              strokeWidth="12" opacity="0.08"
               className="animate-pulse"
             />
           )}
           <circle
-            cx="100"
-            cy="100"
-            r="88"
-            fill="none"
-            stroke="rgba(255,255,255,0.05)"
+            cx="100" cy="100" r="88"
+            fill="none" stroke="rgba(255,255,255,0.05)"
             strokeWidth="5"
           />
           <circle
-            cx="100"
-            cy="100"
-            r="88"
-            fill="none"
-            stroke={mode.ringColor}
-            strokeWidth="5"
-            strokeLinecap="round"
+            cx="100" cy="100" r="88"
+            fill="none" stroke={mode.ringColor}
+            strokeWidth="5" strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={dashOffset}
             className="timer-ring"
             style={{
-              filter: isRunning
-                ? `drop-shadow(0 0 12px ${mode.ringColor}60)`
-                : 'none',
+              filter: isRunning ? `drop-shadow(0 0 12px ${mode.ringColor}60)` : 'none',
               transition: 'filter 0.5s ease',
             }}
           />
         </svg>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className={`text-5xl font-light tracking-wider font-mono ${
-              isRunning ? 'text-white' : isPaused ? 'text-amber-400' : 'text-gray-300'
-            }`}
-          >
-            {displayTime}
-          </span>
-          <span className={`text-xs mt-1 ${mode.color} font-medium`}>
-            {mode.label}
-          </span>
+        {/* Center: Pet + Time */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+          {pet ? (
+            <>
+              <span className={`text-4xl ${isRunning ? 'animate-pulse' : ''}`}>
+                {SPECIES_CONFIG[pet.species]?.stages[pet.stage] || '🥚'}
+              </span>
+              <span
+                className={`text-4xl font-light tracking-wider font-mono ${
+                  isRunning ? 'text-white' : isPaused ? 'text-amber-400' : 'text-gray-300'
+                }`}
+              >
+                {displayTime}
+              </span>
+              <span className={`text-[10px] ${mode.color} font-medium`}>
+                {mode.label}
+              </span>
+            </>
+          ) : (
+            <>
+              <span
+                className={`text-5xl font-light tracking-wider font-mono ${
+                  isRunning ? 'text-white' : isPaused ? 'text-amber-400' : 'text-gray-300'
+                }`}
+              >
+                {displayTime}
+              </span>
+              <span className={`text-xs ${mode.color} font-medium`}>
+                {mode.label}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Progress dots with stagger animation */}
+      {/* Progress dots */}
       <div className="flex items-center gap-2">
         {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
           <div
@@ -156,8 +166,8 @@ export function Timer() {
 
       {/* Current task */}
       {currentTask && (
-        <div className="glass rounded-xl px-3 py-2 max-w-full">
-          <p className="text-xs text-gray-400 truncate">
+        <div className="glass rounded-xl px-3 py-1.5 max-w-full">
+          <p className="text-[11px] text-gray-400 truncate">
             📋 {currentTask.name}
             {currentTask.repo && (
               <span className="text-gray-600 ml-1">· {currentTask.repo}</span>
@@ -169,11 +179,39 @@ export function Timer() {
       {/* Controls */}
       <Controls />
 
+      {/* Pet interactions (only visible when not running) */}
+      {pet && !isRunning && (
+        <div className="glass rounded-xl p-2 w-full max-w-[300px]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[10px] text-gray-400">
+              <span>{pet.mood >= 70 ? '😊' : pet.mood >= 40 ? '😐' : '😢'} {pet.mood}</span>
+              <span>🍖 {pet.hunger}</span>
+              <span>💕 {Math.floor(pet.affinity / 100)}%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={feedPet} disabled={pet.food <= 0}
+                className="btn-ghost text-[10px] px-1.5 py-0.5 disabled:opacity-30"
+                title="Feed">
+                🍖{pet.food}
+              </button>
+              <button onClick={playWithPet}
+                className="btn-ghost text-[10px] px-1.5 py-0.5" title="Play">
+                ⚽
+              </button>
+              <button onClick={petPet}
+                className="btn-ghost text-[10px] px-1.5 py-0.5" title="Pet">
+                🤲
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Today summary */}
       <div className="flex items-center gap-3 text-xs text-gray-500">
         <span title="Pomodoros today">🍅 {completedToday}/{settings.dailyGoal}</span>
         {streak.current > 0 && <span title="Day streak">🔥 {streak.current}d</span>}
-        <span title="Forgiveness cards remaining" className={cardsRemaining > 0 ? 'text-blue-400' : ''}>
+        <span title="Forgiveness cards" className={cardsRemaining > 0 ? 'text-blue-400' : ''}>
           💫 {cardsRemaining}
         </span>
         <span title="Total XP" className="text-amber-500">⚡ {playerProgress.totalXP}</span>

@@ -21,6 +21,7 @@ import {
   STORAGE_KEY_SETTINGS,
   STORAGE_KEY_SYNC,
   STORAGE_KEY_PROGRESS,
+  STORAGE_KEY_PET,
 } from './constants';
 
 /* ── Generic helpers ───────────────────────────────── */
@@ -92,6 +93,28 @@ export async function loadProgress(): Promise<PlayerProgress> {
 
 export async function saveProgress(progress: PlayerProgress): Promise<void> {
   await set(STORAGE_KEY_PROGRESS, progress);
+}
+
+/* ── Pet ─────────────────────────────────────────────── */
+
+import type { Pet } from '@/lib/pet-system';
+
+export async function loadPet(): Promise<Pet | null> {
+  return get<Pet | null>(STORAGE_KEY_PET, null);
+}
+
+export async function savePet(pet: Pet): Promise<void> {
+  await set(STORAGE_KEY_PET, pet);
+}
+
+export async function updatePet(
+  updater: (current: Pet) => Pet,
+): Promise<Pet> {
+  const current = await loadPet();
+  if (!current) throw new Error('No pet found');
+  const updated = updater(current);
+  await savePet(updated);
+  return updated;
 }
 
 export async function updateProgress(

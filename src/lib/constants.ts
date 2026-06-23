@@ -11,6 +11,7 @@ export const STORAGE_KEY_STREAK = 'pomodoro_streak';
 export const STORAGE_KEY_SETTINGS = 'pomodoro_settings';
 export const STORAGE_KEY_SYNC = 'pomodoro_sync_state';
 export const STORAGE_KEY_PROGRESS = 'pomodoro_progress';
+export const STORAGE_KEY_PET = 'pomodoro_pet';
 
 export const TICK_INTERVAL_SECONDS = 1;
 
