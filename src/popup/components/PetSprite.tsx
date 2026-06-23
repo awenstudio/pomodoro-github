@@ -35,16 +35,63 @@ const PORTRAITS: Record<string, string> = {
   'fox': '/pets/fox.png',
 };
 
+/* ── Timer state → pet state image mapping ──── */
+// Maps (species, timerAnimation) to specific state image filenames
+const STATE_MAP: Record<string, Record<string, string>> = {
+  shiba: {
+    focus: '/pets/shiba-inu-standing.png',
+    rest: '/pets/shiba-inu-sleeping.png',
+    relax: '/pets/shiba-inu-happy.png',
+    idle: '/pets/shiba-inu-sitting.png',
+    walk: '/pets/shiba-inu-following.png',
+    hatch: '/pets/shiba-inu-from-box.png',
+    static: '/pets/shiba-inu.png',
+  },
+  cat: {
+    focus: '/pets/cat-standing.png',
+    rest: '/pets/cat-sleeping.png',
+    relax: '/pets/cat-happy.png',
+    idle: '/pets/cat-sitting.png',
+    walk: '/pets/cat-standing.png',
+    hatch: '/pets/cat-from-box.png',
+    static: '/pets/cat.png',
+  },
+  rabbit: {
+    focus: '/pets/rabbit-standing.png',
+    rest: '/pets/rabbit-sleeping.png',
+    relax: '/pets/rabbit-happy.png',
+    idle: '/pets/rabbit-sitting.png',
+    walk: '/pets/rabbit-standing.png',
+    hatch: '/pets/rabbit-from-box.png',
+    static: '/pets/rabbit.png',
+  },
+  fox: {
+    focus: '/pets/fox-standing.png',
+    rest: '/pets/fox-sleeping.png',
+    relax: '/pets/fox-happy.png',
+    idle: '/pets/fox-sitting.png',
+    walk: '/pets/fox-standing.png',
+    hatch: '/pets/fox-from-box.png',
+    static: '/pets/fox.png',
+  },
+};
+
 /* ── Animation frame sets ──── */
 function getFrames(species: string, animation: AnimationType): string[] {
   const filePrefix = SPECIES_FILE[species] || species;
+
+  // Check state map first — if we have a state image, use it as single frame
+  const stateMap = STATE_MAP[species];
+  if (stateMap && stateMap[animation]) {
+    return [stateMap[animation]];
+  }
 
   // Static: show portrait
   if (animation === 'static') {
     return [PORTRAITS[species] || PORTRAITS['shiba']];
   }
 
-  // Build frame list from species-specific files
+  // Build frame list from species-specific animation files
   const frames: string[] = [];
   switch (animation) {
     case 'idle':
@@ -57,18 +104,15 @@ function getFrames(species: string, animation: AnimationType): string[] {
       for (let i = 1; i <= 5; i++) frames.push(`/animations/${filePrefix}-hatch-0${i}.png`);
       break;
     case 'focus':
-      // Focus = alert sitting (idle-01 + idle-02)
       frames.push(`/animations/${filePrefix}-idle-01.png`);
       frames.push(`/animations/${filePrefix}-idle-02.png`);
       frames.push(`/animations/${filePrefix}-idle-01.png`);
       break;
     case 'rest':
-      // Rest = lying down (idle-03)
       frames.push(`/animations/${filePrefix}-idle-03.png`);
       frames.push(`/animations/${filePrefix}-idle-03.png`);
       break;
     case 'relax':
-      // Relax = playful walking
       frames.push(`/animations/${filePrefix}-walk-01.png`);
       frames.push(`/animations/${filePrefix}-walk-02.png`);
       frames.push(`/animations/${filePrefix}-idle-02.png`);
