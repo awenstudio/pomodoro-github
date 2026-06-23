@@ -6,7 +6,7 @@
 import { useTimer } from '../hooks/useTimer';
 import { Controls } from './Controls';
 import { getLevelFromXP, getMaxForgivenessCards } from '@/lib/gamification';
-import { SPECIES_CONFIG } from '@/lib/pet-system';
+import { PetSprite } from './PetSprite';
 import type { SessionType } from '@/types';
 
 const CIRCUMFERENCE = 2 * Math.PI * 88;
@@ -107,9 +107,14 @@ export function Timer() {
         {/* Center: Pet + Time */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           {pet && (
-            <span className={`text-4xl ${isRunning ? 'animate-sleep-bob' : 'animate-bounce-gentle'}`}>
-              {SPECIES_CONFIG[pet.species]?.stages[pet.stage] || '🥚'}
-            </span>
+            <div className={`${isRunning ? 'animate-float' : ''}`}>
+              <PetSprite
+                species={pet.species}
+                animation={isRunning ? 'walk' : 'idle'}
+                size={72}
+                className="shadow-lg"
+              />
+            </div>
           )}
           <span
             className={`text-4xl font-light tracking-wider font-mono ${

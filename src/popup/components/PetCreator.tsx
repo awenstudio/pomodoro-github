@@ -5,6 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { SPECIES_CONFIG } from '@/lib/pet-system';
+import { PetSprite } from './PetSprite';
 import type { PetSpecies } from '@/lib/pet-system';
 
 interface PetCreatorProps {
@@ -60,7 +61,7 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
                   : 'glass border-2 border-transparent hover:border-white/10 active:scale-95'
                 }`}
             >
-              <span className="text-4xl">{config.stages.baby}</span>
+              <PetSprite species={species} animation="static" size={64} className="mx-auto" />
               <span className="text-xs text-white font-medium">{config.name}</span>
               <span className="text-[9px] text-gray-500">{config.rarity}</span>
             </button>
