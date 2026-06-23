@@ -196,7 +196,19 @@ const FALLBACK_ANIMATIONS: Record<string, string[]> = {
   ],
 };
 
+const PORTRAITS: Record<string, string> = {
+  'shiba': '/pets/shiba-inu.png',
+  'cat': '/pets/cat.png',
+  'rabbit': '/pets/rabbit.png',
+  'fox': '/pets/fox.png',
+};
+
 function getFrames(species: string, animation: AnimationType): string[] {
+  // Portrait mode: use static pet portrait
+  if (animation === 'static') {
+    const portrait = PORTRAITS[species] || PORTRAITS['shiba'];
+    return [portrait];
+  }
   const speciesAnims = SPECIES_ANIMATIONS[species] || {};
   return speciesAnims[animation] || FALLBACK_ANIMATIONS[animation] || FALLBACK_ANIMATIONS.idle;
 }
