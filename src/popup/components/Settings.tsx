@@ -174,9 +174,9 @@ export function Settings() {
       </button>
 
       {/* Google Sync — OPTIONAL, bottom of page */}
-      <div className="glass rounded-xl p-3 border border-white/5">
+      <div className="glass rounded-2xl p-3 border border-white/5">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs text-gray-400 font-medium">☁️ Cloud Sync</span>
+          <span className="text-xs text-cream-300 font-medium">☁️ Cloud Sync</span>
           <span className="text-[9px] text-gray-600 bg-surface-3 px-1.5 py-0.5 rounded-full">
             optional
           </span>
@@ -258,8 +258,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="glass rounded-xl p-3">
-      <h3 className="text-xs font-medium text-gray-400 mb-3">{title}</h3>
+    <div className="glass rounded-2xl p-3">
+      <h3 className="text-xs font-medium text-cream-300 mb-3">{title}</h3>
       <div className="flex flex-col gap-2.5">{children}</div>
     </div>
   );
@@ -295,7 +295,7 @@ function ToggleRow({
       <button
         onClick={() => onChange(!checked)}
         className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${
-          checked ? 'bg-tomato-600' : 'bg-surface-4'
+          checked ? 'bg-moss-600' : 'bg-surface-4'
         }`}
       >
         <div

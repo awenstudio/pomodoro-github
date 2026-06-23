@@ -37,7 +37,7 @@ export function Stats() {
           label="Pomodoros"
           value={completedToday}
           icon="🍅"
-          accent="text-tomato-400"
+          accent="text-tea-400"
         />
         <StatCard
           label="Focus"
@@ -54,16 +54,16 @@ export function Stats() {
       </div>
 
       {/* Daily goal progress */}
-      <div className="glass rounded-xl p-3 animate-fade-in">
+      <div className="glass rounded-2xl p-3 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-400">Daily Goal</span>
+          <span className="text-xs text-cream-300">Daily Goal</span>
           <span className="text-xs font-mono text-white">
             {completedToday}/{settings.dailyGoal}
           </span>
         </div>
         <div className="h-1.5 bg-surface-3 rounded-full overflow-hidden">
           <div
-            className="h-full bg-tomato-500 rounded-full transition-all duration-500"
+            className="h-full bg-moss-500 rounded-full transition-all duration-500"
             style={{ width: `${goalProgress * 100}%` }}
           />
         </div>
@@ -71,7 +71,7 @@ export function Stats() {
 
       {/* Weekly / Monthly summary */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="glass rounded-xl p-3">
+        <div className="glass rounded-2xl p-3">
           <h3 className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
             This Week
           </h3>
@@ -82,7 +82,7 @@ export function Stats() {
             {weekStats.minutes}m focus
           </div>
         </div>
-        <div className="glass rounded-xl p-3">
+        <div className="glass rounded-2xl p-3">
           <h3 className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
             This Month
           </h3>
@@ -99,8 +99,8 @@ export function Stats() {
       <Heatmap dailyStats={allStats} />
 
       {/* Session history (today) */}
-      <div className="glass rounded-xl p-3">
-        <h3 className="text-xs font-medium text-gray-400 mb-2">
+      <div className="glass rounded-2xl p-3">
+        <h3 className="text-xs font-medium text-cream-300 mb-2">
           Today's Sessions
         </h3>
         {todayStats?.sessions.length ? (
@@ -111,8 +111,8 @@ export function Stats() {
                 className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] ${
                   session.type === 'work'
                     ? session.completed
-                      ? 'bg-tomato-600/30 text-tomato-300'
-                      : 'bg-tomato-600/10 text-tomato-600'
+                      ? 'bg-moss-600/30 text-tea-300'
+                      : 'bg-moss-600/10 text-tea-500'
                     : 'bg-green-600/20 text-green-400'
                 }`}
                 title={`${session.type} — ${session.completed ? 'completed' : 'interrupted'}`}
@@ -132,8 +132,8 @@ export function Stats() {
       <Achievements dailyStats={allStats} streak={streak} />
 
       {/* Streak info */}
-      <div className="glass rounded-xl p-3">
-        <h3 className="text-xs font-medium text-gray-400 mb-2">Streak</h3>
+      <div className="glass rounded-2xl p-3">
+        <h3 className="text-xs font-medium text-cream-300 mb-2">Streak</h3>
         <div className="flex items-center justify-between">
           <div>
             <span className="text-2xl font-light text-white">
@@ -209,7 +209,7 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="glass rounded-xl p-3 text-center hover-lift cursor-default">
+    <div className="glass rounded-2xl p-3 text-center hover-lift cursor-default">
       <div className="text-lg mb-0.5">{icon}</div>
       <div className={`text-xl font-light ${accent}`}>{value}</div>
       <div className="text-[10px] text-gray-500 mt-0.5">{label}</div>

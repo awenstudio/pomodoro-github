@@ -63,7 +63,7 @@ export function Achievements({ dailyStats, streak }: AchievementsProps) {
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   return (
-    <div className="glass rounded-xl p-3">
+    <div className="glass rounded-2xl p-3">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-medium text-gray-400">Achievements</h3>
         <span className="text-[10px] text-gray-600">

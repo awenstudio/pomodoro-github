@@ -15,6 +15,8 @@
     overflow-y: auto;
     overflow-x: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Warm cream-tinted background */
+    background: #1A1814;
   }
 
   ::-webkit-scrollbar {
@@ -26,164 +28,105 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 230, 0.12);
     border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 248, 230, 0.2);
   }
 }
 
 @layer components {
+  /* ── Timer Ring ── */
   .timer-ring {
     transition: stroke-dashoffset 1s linear;
   }
 
+  /* ── Glass Card (warm-tinted) ── */
   .glass {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 248, 230, 0.04);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 248, 230, 0.08);
   }
 
   .glass-hover:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 248, 230, 0.07);
   }
 
+  /* ── Buttons (moss green primary, warm tones) ── */
   .btn-primary {
-    @apply bg-tomato-600 hover:bg-tomato-500 active:bg-tomato-700
-           text-white font-medium rounded-xl
-           transition-all duration-150 ease-out
-           hover:shadow-lg hover:shadow-tomato-600/20
-           active:scale-[0.97];
+    @apply bg-moss-600 hover:bg-moss-500 active:bg-moss-700
+           text-white font-medium rounded-2xl
+           transition-all duration-200 ease-out
+           hover:shadow-lg hover:shadow-moss-600/20
+           active:scale-[0.96];
   }
 
   .btn-secondary {
     @apply bg-surface-3 hover:bg-surface-4 active:bg-surface-2
            text-gray-300 hover:text-white
-           rounded-xl transition-all duration-150 ease-out
-           active:scale-[0.97];
+           rounded-2xl transition-all duration-200 ease-out
+           active:scale-[0.96];
   }
 
   .btn-ghost {
-    @apply text-gray-400 hover:text-white hover:bg-white/5
-           rounded-lg transition-all duration-150;
+    @apply text-gray-400 hover:text-cream-100 hover:bg-cream-100/5
+           rounded-xl transition-all duration-200;
   }
 
+  .btn-warm {
+    @apply bg-tea-500/20 hover:bg-tea-500/30 text-tea-300
+           rounded-2xl transition-all duration-200
+           active:scale-[0.96];
+  }
+
+  /* ── Tabs ── */
   .tab-active {
-    @apply bg-white/10 text-white font-semibold;
+    @apply bg-cream-100/10 text-cream-100 font-semibold;
   }
 
   .tab-inactive {
     @apply text-gray-500 hover:text-gray-300;
   }
 
+  /* ── Inputs ── */
   .setting-input {
     @apply w-16 px-2 py-1 text-center text-sm
-           bg-surface-2 border border-white/10 rounded-lg
-           text-white focus:outline-none focus:border-tomato-500
-           transition-colors duration-150;
+           bg-surface-2 border border-cream-100/10 rounded-xl
+           text-cream-100 focus:outline-none focus:border-moss-500
+           transition-colors duration-200;
   }
 }
 
 /* ── Tab Slide Animations ─────────────────────────── */
 
 @keyframes tab-slide-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes tab-slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes confetti {
-  0% {
-    opacity: 1;
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-60px) rotate(720deg) scale(0);
-  }
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .animate-tab-right {
-  animation: tab-slide-right 0.25s ease-out;
+  animation: tab-slide-right 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .animate-tab-left {
-  animation: tab-slide-left 0.25s ease-out;
+  animation: tab-slide-left 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* ── Utility Animations ───────────────────────────── */
+
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.2s ease-out;
+  animation: scaleIn 0.2s ease-out;
 }
 
 .animate-float {
@@ -191,18 +134,28 @@
 }
 
 .animate-glow {
-  animation: glow-pulse 2s ease-in-out infinite;
+  animation: glowPulse 2.5s ease-in-out infinite;
 }
 
 .animate-shimmer {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 248, 230, 0.04) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(90, 175, 94, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(90, 175, 94, 0.3); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* ── Hover Effects ─────────────────────────────────── */
@@ -213,17 +166,22 @@
   }
 
   .hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   }
 
   .press-scale {
-    transition: transform 0.1s ease;
+    transition: transform 0.12s ease;
   }
   .press-scale:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
+  }
+
+  /* Warm glow for active elements */
+  .warm-glow {
+    box-shadow: 0 0 20px rgba(255, 159, 74, 0.15);
   }
 }

@@ -56,7 +56,7 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
               onClick={() => setSelected(species)}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200
                 ${isSelected
-                  ? 'bg-tomato-600/20 border-2 border-tomato-500 scale-105'
+                  ? 'bg-moss-600/20 border-2 border-moss-500 scale-105'
                   : 'glass border-2 border-transparent hover:border-white/10 active:scale-95'
                 }`}
             >

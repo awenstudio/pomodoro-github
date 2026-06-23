@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────
- *  App — Root component with animated tab transitions.
+ *  App — Pawodoro root. Warm, cozy, pet-themed.
  * ───────────────────────────────────────────────────── */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -16,7 +16,7 @@ type Tab = 'timer' | 'stats' | 'settings';
 const STORAGE_KEY_ONBOARDED = 'pomodoro_onboarded';
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'timer', icon: '⏱', label: 'Timer' },
+  { id: 'timer', icon: '🐾', label: 'Focus' },
   { id: 'stats', icon: '📊', label: 'Stats' },
   { id: 'settings', icon: '⚙️', label: 'Settings' },
 ];
@@ -38,8 +38,6 @@ export default function App() {
     setOnboarded(true);
   }, []);
 
-
-
   const handleTabChange = useCallback((newTab: Tab) => {
     if (newTab === activeTab) return;
     const oldIndex = TABS.findIndex((t) => t.id === activeTab);
@@ -51,7 +49,7 @@ export default function App() {
   if (onboarded === null) {
     return (
       <div className="flex items-center justify-center min-h-[520px]">
-        <div className="text-2xl animate-pulse">🍅</div>
+        <div className="text-3xl animate-bounce-gentle">🐾</div>
       </div>
     );
   }
@@ -72,8 +70,8 @@ export default function App() {
         {/* Header */}
         <header className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🍅</span>
-            <h1 className="text-sm font-semibold text-white tracking-tight">
+            <span className="text-lg animate-bounce-gentle">🐾</span>
+            <h1 className="text-sm font-semibold text-cream-100 tracking-tight">
               Pawodoro
             </h1>
           </div>
@@ -92,9 +90,9 @@ export default function App() {
               <svg
                 className={`w-4 h-4 ${
                   timer.syncState.status === 'syncing'
-                    ? 'animate-spin text-blue-400'
+                    ? 'animate-spin text-moss-400'
                     : timer.syncState.status === 'success'
-                      ? 'text-green-400'
+                      ? 'text-moss-400'
                       : 'text-gray-500'
                 }`}
                 fill="none"
@@ -112,7 +110,7 @@ export default function App() {
           )}
         </header>
 
-        {/* Tab content with slide animation */}
+        {/* Tab content */}
         <main className="flex-1 px-4 pb-2 relative overflow-hidden">
           <div
             key={activeTab}
@@ -138,17 +136,15 @@ export default function App() {
           </div>
         </main>
 
-        {/* Tab bar with animated indicator */}
-        <nav className="relative px-4 py-3 border-t border-white/5">
-          {/* Animated underline indicator */}
+        {/* Tab bar */}
+        <nav className="relative px-4 py-3 border-t border-cream-100/5">
           <div
-            className="absolute top-0 h-[2px] bg-tomato-500 rounded-full transition-all duration-300 ease-out"
+            className="absolute top-0 h-[2px] bg-moss-500 rounded-full transition-all duration-300 ease-out"
             style={{
               left: `${(TABS.findIndex((t) => t.id === activeTab) / TABS.length) * 100}%`,
               width: `${100 / TABS.length}%`,
             }}
           />
-
           <div className="flex items-center justify-center gap-1">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -156,18 +152,14 @@ export default function App() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs
+                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs
                     transition-all duration-200 ease-out
                     ${isActive
-                      ? 'text-white scale-105'
+                      ? 'text-cream-100 scale-105'
                       : 'text-gray-500 hover:text-gray-300 active:scale-95'
                     }`}
                 >
-                  <span
-                    className={`transition-transform duration-200 ${
-                      isActive ? 'scale-110' : ''
-                    }`}
-                  >
+                  <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
                     {tab.icon}
                   </span>
                   <span className="font-medium">{tab.label}</span>
