@@ -27,34 +27,34 @@ interface PetSpriteProps {
 
 const ANIMATION_FRAMES: Record<string, string[]> = {
   idle: [
-    '/animations/idle-01.jpg',
-    '/animations/idle-02.jpg',
-    '/animations/idle-03.jpg',
-    '/animations/idle-02.jpg',
+    '/animations/idle-01.png',
+    '/animations/idle-02.png',
+    '/animations/idle-03.png',
+    '/animations/idle-02.png',
   ],
   walk: [
-    '/animations/walk-01.jpg',
-    '/animations/walk-02.jpg',
+    '/animations/walk-01.png',
+    '/animations/walk-02.png',
   ],
   hatch: [
-    '/animations/egg-01.jpg',
-    '/animations/egg-02.jpg',
-    '/animations/egg-03.jpg',
-    '/animations/egg-04.jpg',
-    '/animations/egg-05.jpg',
+    '/animations/egg-01.png',
+    '/animations/egg-02.png',
+    '/animations/egg-03.png',
+    '/animations/egg-04.png',
+    '/animations/egg-05.png',
   ],
 };
 
 const PET_IMAGES: Record<string, string> = {
-  shiba: '/pets/shiba-inu.jpg',
-  cat: '/pets/cat.jpg',
-  rabbit: '/pets/rabbit.jpg',
-  fox: '/pets/fox.jpg',
-  penguin: '/pets/penguin.jpg',
-  panda: '/pets/panda.jpg',
-  dragon: '/pets/dragon.jpg',
-  robot: '/pets/robot.jpg',
-  alien: '/pets/alien.jpg',
+  shiba: '/pets/shiba-inu.png',
+  cat: '/pets/cat.png',
+  rabbit: '/pets/rabbit.png',
+  fox: '/pets/fox.png',
+  penguin: '/pets/penguin.png',
+  panda: '/pets/panda.png',
+  dragon: '/pets/dragon.png',
+  robot: '/pets/robot.png',
+  alien: '/pets/alien.png',
 };
 
 const SPEEDS: Record<AnimationType, number> = {
