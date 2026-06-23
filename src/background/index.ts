@@ -23,9 +23,20 @@ import {
   addSession,
   updateDailyStats,
   updateStreak,
+  updateProgress,
+  loadProgress,
   loadAllData,
   createEmptyDailyStats,
+  loadDailyStats,
 } from '@/lib/storage';
+import {
+  calculateSessionXP,
+  getDailyTaskBonus,
+  getStreakBonus,
+  applyDailyCap,
+  getLevelFromXP,
+  getMaxForgivenessCards,
+} from '@/lib/gamification';
 import { showNotification } from '@/lib/notifications';
 import { performDriveSync } from '@/lib/google-drive-sync';
 import { SYNC_ALARM_NAME } from '@/lib/constants';
@@ -129,7 +140,40 @@ async function handleTick(): Promise<void> {
         });
 
         if (effect.sessionType === 'work') {
-          await updateStreak(dateStr);
+          const newStreak = await updateStreak(dateStr);
+
+          // ── XP & Level System ──
+          const todayStr = new Date().toISOString().split('T')[0];
+          const todayStats = await loadDailyStats();
+          const pomodorosToday = todayStats[dateStr]?.completedPomodoros || 0;
+          const durationMin = Math.round(sessionDuration / 60);
+          const currentProgress = await loadProgress();
+
+          // Reset daily XP if new day
+          const dailyXP = currentProgress.dailyXPDate === todayStr ? currentProgress.dailyXP : 0;
+
+          // Calculate XP
+          let xp = calculateSessionXP(durationMin, pomodorosToday, durationMin >= 50);
+          const taskBonus = pomodorosToday >= 3 ? getDailyTaskBonus(pomodorosToday + 1) : 0;
+          const streakBonus = getStreakBonus(newStreak.current);
+          const isNewStreakBonus = newStreak.current > currentProgress.lastBonusStreak &&
+            [7, 14, 21, 30].includes(newStreak.current);
+          xp += taskBonus + (isNewStreakBonus ? streakBonus : 0);
+          xp = applyDailyCap(xp, dailyXP);
+
+          const newTotal = currentProgress.totalXP + xp;
+          const levelInfo = getLevelFromXP(newTotal);
+
+          await updateProgress((prog) => ({
+            ...prog,
+            totalXP: newTotal,
+            level: levelInfo.level,
+            dailyXP: dailyXP + xp,
+            dailyXPDate: todayStr,
+            lastBonusStreak: isNewStreakBonus ? newStreak.current : prog.lastBonusStreak,
+            forgivenessCardsDate: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsDate : todayStr,
+            forgivenessCardsUsed: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsUsed : 0,
+          }));
         }
         break;
       }
@@ -201,6 +245,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
   switch (msg.type) {
     case 'GET_STATE': {
       const data = await loadAllData();
+      const progress = await loadProgress();
       return {
         success: true,
         data: {
@@ -209,8 +254,36 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
           todayStats: getTodayStats(data.dailyStats),
           streak: data.streak,
           syncState: data.syncState,
+          progress,
         },
       };
+    }
+
+    case 'USE_FORGIVENESS': {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const prog = await loadProgress();
+      const maxCards = getMaxForgivenessCards(prog.level);
+      const usedToday = prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsUsed : 0;
+
+      if (usedToday >= maxCards) {
+        return { success: false, error: 'No forgiveness cards left today' };
+      }
+
+      await updateProgress((p) => ({
+        ...p,
+        forgivenessCardsUsed: usedToday + 1,
+        forgivenessCardsDate: todayStr,
+      }));
+
+      // Mark current session as saved (not interrupted)
+      if (currentState && currentState.status !== 'idle') {
+        currentState = { ...currentState, status: 'idle' };
+        await saveTimerState(currentState);
+        updateBadge(currentState);
+        stopTickAlarm();
+      }
+
+      return { success: true };
     }
 
     case 'START': {

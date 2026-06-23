@@ -13,9 +13,10 @@ import type {
   DailyStats,
   StreakData,
   SyncState,
+  PlayerProgress,
 } from '@/types';
 import { DEFAULT_SETTINGS } from '@/types';
-import { createInitialState, formatTime, getProgress } from '@/lib/timer-engine';
+import { createInitialState, formatTime, getProgress as calcProgress } from '@/lib/timer-engine';
 
 interface TimerStore {
   // Timer state
@@ -24,7 +25,7 @@ interface TimerStore {
   timeLeft: number;
   totalTime: number;
   currentSessionType: SessionType;
-  progress: number;
+  timerProgress: number;       // 0-1 timer progress
   displayTime: string;
   pomodorosInCycle: number;
 
@@ -37,6 +38,9 @@ interface TimerStore {
   // Current task
   currentTask: TaskRef | null;
 
+  // Player progress (XP, level)
+  progress: PlayerProgress;
+
   // Actions
   setTimerState: (state: TimerState) => void;
   setSettings: (settings: Settings) => void;
@@ -44,6 +48,7 @@ interface TimerStore {
   setStreak: (streak: StreakData) => void;
   setSyncState: (state: SyncState) => void;
   setCurrentTask: (task: TaskRef | null) => void;
+  setProgress: (progress: PlayerProgress) => void;
 
   // Derived
   isRunning: boolean;
@@ -60,7 +65,7 @@ export const useTimerStore = create<TimerStore>((set) => ({
   timeLeft: DEFAULT_SETTINGS.workDuration,
   totalTime: DEFAULT_SETTINGS.workDuration,
   currentSessionType: 'work',
-  progress: 0,
+  timerProgress: 0,
   displayTime: formatTime(DEFAULT_SETTINGS.workDuration),
   pomodorosInCycle: 0,
   settings: DEFAULT_SETTINGS,
@@ -68,6 +73,15 @@ export const useTimerStore = create<TimerStore>((set) => ({
   streak: { current: 0, longest: 0, lastActiveDate: '' },
   syncState: { status: 'idle', lastSyncAt: null, error: null, pendingChanges: 0 },
   currentTask: null,
+  progress: {
+    totalXP: 0,
+    level: 1,
+    forgivenessCardsUsed: 0,
+    forgivenessCardsDate: '',
+    dailyXP: 0,
+    dailyXPDate: '',
+    lastBonusStreak: 0,
+  },
   isRunning: false,
   isPaused: false,
   isIdle: true,
@@ -75,14 +89,14 @@ export const useTimerStore = create<TimerStore>((set) => ({
   isBreak: false,
 
   setTimerState: (timer) => {
-    const progress = getProgress(timer);
+    const timerProgress = calcProgress(timer);
     set({
       timer,
       timerStatus: timer.status,
       timeLeft: timer.timeLeft,
       totalTime: timer.totalTime,
       currentSessionType: timer.currentSessionType,
-      progress,
+      timerProgress,
       displayTime: formatTime(timer.timeLeft),
       pomodorosInCycle: timer.pomodorosInCycle,
       currentTask: timer.currentTask,
@@ -99,4 +113,5 @@ export const useTimerStore = create<TimerStore>((set) => ({
   setStreak: (streak) => set({ streak }),
   setSyncState: (syncState) => set({ syncState }),
   setCurrentTask: (currentTask) => set({ currentTask }),
+  setProgress: (progress) => set({ progress }),
 }));

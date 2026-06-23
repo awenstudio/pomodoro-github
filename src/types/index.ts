@@ -39,6 +39,16 @@ export interface StreakData {
   lastActiveDate: string; // YYYY-MM-DD
 }
 
+export interface PlayerProgress {
+  totalXP: number;
+  level: number;
+  forgivenessCardsUsed: number; // reset daily
+  forgivenessCardsDate: string; // YYYY-MM-DD
+  dailyXP: number;             // XP earned today (for cap calc)
+  dailyXPDate: string;         // YYYY-MM-DD
+  lastBonusStreak: number;     // last streak day that gave bonus
+}
+
 export interface GoogleUser {
   email: string;
   name: string;
@@ -125,6 +135,7 @@ export type MessageType =
   | { type: 'RESUME' }
   | { type: 'SKIP' }
   | { type: 'RESET' }
+  | { type: 'USE_FORGIVENESS' }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<Settings> }
   | { type: 'SYNC_NOW' }
   | { type: 'GET_STATS' }

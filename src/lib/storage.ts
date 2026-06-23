@@ -7,6 +7,7 @@ import type {
   Settings,
   DailyStats,
   StreakData,
+  PlayerProgress,
   TimerSession,
   SyncState,
   TimerState,
@@ -19,6 +20,7 @@ import {
   STORAGE_KEY_STREAK,
   STORAGE_KEY_SETTINGS,
   STORAGE_KEY_SYNC,
+  STORAGE_KEY_PROGRESS,
 } from './constants';
 
 /* ── Generic helpers ───────────────────────────────── */
@@ -69,6 +71,41 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
 
 export async function loadSessions(): Promise<TimerSession[]> {
   return get<TimerSession[]>(STORAGE_KEY_SESSIONS, []);
+}
+
+// Write queue to prevent race conditions on concurrent adds
+let progressWriteQueue: Promise<void> = Promise.resolve();
+
+/* ── Player Progress ───────────────────────────────── */
+
+export async function loadProgress(): Promise<PlayerProgress> {
+  return get<PlayerProgress>(STORAGE_KEY_PROGRESS, {
+    totalXP: 0,
+    level: 1,
+    forgivenessCardsUsed: 0,
+    forgivenessCardsDate: '',
+    dailyXP: 0,
+    dailyXPDate: '',
+    lastBonusStreak: 0,
+  });
+}
+
+export async function saveProgress(progress: PlayerProgress): Promise<void> {
+  await set(STORAGE_KEY_PROGRESS, progress);
+}
+
+export async function updateProgress(
+  updater: (current: PlayerProgress) => PlayerProgress,
+): Promise<PlayerProgress> {
+  // Serialize through queue to prevent race conditions
+  const resultPromise = progressWriteQueue.then(async () => {
+    const current = await loadProgress();
+    const updated = updater(current);
+    await saveProgress(updated);
+    return updated;
+  });
+  progressWriteQueue = resultPromise.then(() => undefined);
+  return resultPromise;
 }
 
 // Write queue to prevent race conditions on concurrent adds

@@ -1,13 +1,14 @@
 /* ─────────────────────────────────────────────────────
  *  Timer — Main timer display with circular progress,
- *  mode tabs, task display, and controls.
+ *  mode tabs, level/XP display, and controls.
  * ───────────────────────────────────────────────────── */
 
 import { useTimer } from '../hooks/useTimer';
 import { Controls } from './Controls';
+import { getLevelFromXP, getMaxForgivenessCards } from '@/lib/gamification';
 import type { SessionType } from '@/types';
 
-const CIRCUMFERENCE = 2 * Math.PI * 88; // r=88 for the SVG circle
+const CIRCUMFERENCE = 2 * Math.PI * 88;
 
 const MODE_CONFIG: Record<SessionType, { label: string; color: string; ringColor: string }> = {
   work: { label: 'Focus', color: 'text-tomato-400', ringColor: '#ef4444' },
@@ -18,7 +19,7 @@ const MODE_CONFIG: Record<SessionType, { label: string; color: string; ringColor
 export function Timer() {
   const {
     displayTime,
-    progress,
+    timerProgress,
     currentSessionType,
     pomodorosInCycle,
     settings,
@@ -27,14 +28,45 @@ export function Timer() {
     currentTask,
     isRunning,
     isPaused,
+    progress: playerProgress,
   } = useTimer();
 
   const mode = MODE_CONFIG[currentSessionType];
-  const dashOffset = CIRCUMFERENCE * (1 - progress);
+  const dashOffset = CIRCUMFERENCE * (1 - timerProgress);
   const completedToday = todayStats?.completedPomodoros || 0;
+  const levelInfo = getLevelFromXP(playerProgress.totalXP);
+
+  // Forgiveness cards
+  const todayStr = new Date().toISOString().split('T')[0];
+  const cardsUsedToday = playerProgress.forgivenessCardsDate === todayStr ? playerProgress.forgivenessCardsUsed : 0;
+  const maxCards = getMaxForgivenessCards(playerProgress.level);
+  const cardsRemaining = maxCards - cardsUsedToday;
 
   return (
-    <div className="flex flex-col items-center gap-5 animate-fade-in">
+    <div className="flex flex-col items-center gap-4 animate-fade-in">
+      {/* Level & XP bar */}
+      <div className="w-full flex items-center gap-2 px-1">
+        <span className="text-lg" title={`Level ${levelInfo.level}: ${levelInfo.name}`}>
+          {levelInfo.icon}
+        </span>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[10px] text-gray-400">
+              Lv.{levelInfo.level} {levelInfo.name}
+            </span>
+            <span className="text-[10px] text-gray-500 font-mono">
+              {levelInfo.currentXP}/{levelInfo.requiredXP} XP
+            </span>
+          </div>
+          <div className="h-1 bg-surface-3 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              style={{ width: `${levelInfo.progress * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Mode tabs */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-2">
         {(['work', 'shortBreak', 'longBreak'] as SessionType[]).map((type) => (
@@ -52,7 +84,6 @@ export function Timer() {
       {/* Circular timer */}
       <div className="relative w-52 h-52">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
-          {/* Background ring */}
           <circle
             cx="100"
             cy="100"
@@ -61,7 +92,6 @@ export function Timer() {
             stroke="rgba(255,255,255,0.05)"
             strokeWidth="5"
           />
-          {/* Progress ring */}
           <circle
             cx="100"
             cy="100"
@@ -79,7 +109,6 @@ export function Timer() {
           />
         </svg>
 
-        {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
             className={`text-5xl font-light tracking-wider font-mono ${
@@ -124,9 +153,13 @@ export function Timer() {
       <Controls />
 
       {/* Today summary */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
-        <span>🍅 {completedToday}/{settings.dailyGoal}</span>
-        {streak.current > 0 && <span>🔥 {streak.current} day streak</span>}
+      <div className="flex items-center gap-3 text-xs text-gray-500">
+        <span title="Pomodoros today">🍅 {completedToday}/{settings.dailyGoal}</span>
+        {streak.current > 0 && <span title="Day streak">🔥 {streak.current}d</span>}
+        <span title="Forgiveness cards remaining" className={cardsRemaining > 0 ? 'text-blue-400' : ''}>
+          💫 {cardsRemaining}
+        </span>
+        <span title="Total XP" className="text-amber-500">⚡ {playerProgress.totalXP}</span>
       </div>
     </div>
   );

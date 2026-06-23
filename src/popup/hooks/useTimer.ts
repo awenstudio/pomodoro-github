@@ -33,20 +33,16 @@ export function useTimer() {
   /* ── State sync from background ──────────────────── */
 
   const syncState = useCallback(async () => {
-    const response = await sendMessage<{
-      timer: typeof store.timer;
-      settings: typeof store.settings;
-      todayStats: typeof store.todayStats;
-      streak: typeof store.streak;
-      syncState: typeof store.syncState;
-    }>({ type: 'GET_STATE' });
+    const response = await sendMessage<Record<string, unknown>>({ type: 'GET_STATE' });
 
     if (response.success && response.data) {
-      store.setTimerState(response.data.timer);
-      store.setSettings(response.data.settings);
-      store.setTodayStats(response.data.todayStats);
-      store.setStreak(response.data.streak);
-      store.setSyncState(response.data.syncState);
+      const data = response.data as Record<string, unknown>;
+      if (data.timer) store.setTimerState(data.timer as typeof store.timer);
+      if (data.settings) store.setSettings(data.settings as typeof store.settings);
+      if (data.todayStats) store.setTodayStats(data.todayStats as typeof store.todayStats);
+      if (data.streak) store.setStreak(data.streak as typeof store.streak);
+      if (data.syncState) store.setSyncState(data.syncState as typeof store.syncState);
+      if (data.progress) store.setProgress(data.progress as import('@/types').PlayerProgress);
     }
   }, []); // store is a stable Zustand reference
 
@@ -153,6 +149,14 @@ export function useTimer() {
     await syncState();
   }, [syncState]);
 
+  const useForgiveness = useCallback(async () => {
+    const response = await sendMessage({ type: 'USE_FORGIVENESS' });
+    if (response.success) {
+      await syncState();
+    }
+    return response.success;
+  }, [syncState]);
+
   return {
     // State (spread from Zustand store — all reactive)
     ...store,
@@ -167,5 +171,6 @@ export function useTimer() {
     refreshSync: syncState,
     updateSettings,
     clearData,
+    useForgiveness,
   };
 }
