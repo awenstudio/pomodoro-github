@@ -4,6 +4,7 @@
  * ───────────────────────────────────────────────────── */
 
 import { useState, useCallback } from 'react';
+import { PetSprite } from './PetSprite';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -53,7 +54,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
 
       {/* Content */}
-      <div className="text-5xl mb-6 animate-bounce-gentle">{current.icon}</div>
+      <div className="mb-6 animate-bounce-gentle">
+        {step === 0 ? (
+          <PetSprite species="shiba-inu" animation="idle" size={96} />
+        ) : step === 1 ? (
+          <PetSprite species="shiba-inu" animation="focus" size={96} />
+        ) : (
+          <PetSprite species="shiba-inu" animation="hatch" size={96} />
+        )}
+      </div>
       <h2 className="text-xl font-semibold text-cream-100 mb-3 text-center">{current.title}</h2>
       <p className="text-sm text-gray-400 text-center max-w-[280px] mb-8 leading-relaxed">{current.description}</p>
 
