@@ -1,31 +1,168 @@
 /* ─────────────────────────────────────────────────────
  *  PetSprite — Frame-by-frame sprite animation using
  *  AI-generated pet illustrations. Supports idle,
- *  walk, and hatch animations.
+ *  walk, hatch, focus, rest, relax animations.
  * ───────────────────────────────────────────────────── */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-export type AnimationType = 'idle' | 'walk' | 'hatch' | 'static';
+export type AnimationType = 'idle' | 'walk' | 'hatch' | 'focus' | 'rest' | 'relax' | 'static';
 
 interface PetSpriteProps {
-  /** Current pet species for static fallback */
-  species?: string;
+  /** Pet species key (e.g. 'shiba-inu', 'cat') */
+  species: string;
   /** Which animation to play */
   animation: AnimationType;
-  /** Frame size in pixels */
+  /** Sprite size in px (default 128) */
   size?: number;
+  /** Extra CSS classes */
+  className?: string;
   /** Animation speed in ms per frame */
-  speed?: number;
+  frameRate?: number;
   /** Called when hatch animation completes */
   onHatchComplete?: () => void;
-  /** CSS class */
-  className?: string;
 }
 
 /* ── Animation frame sets (served from public/) ──── */
 
-const ANIMATION_FRAMES: Record<string, string[]> = {
+// Species-specific animation frames
+const SPECIES_ANIMATIONS: Record<string, Record<string, string[]>> = {
+  'shiba-inu': {
+    idle: [
+      '/animations/shiba-inu-idle-01.png',
+      '/animations/shiba-inu-idle-02.png',
+      '/animations/shiba-inu-idle-03.png',
+      '/animations/shiba-inu-idle-02.png',
+    ],
+    walk: [
+      '/animations/shiba-inu-walk-01.png',
+      '/animations/shiba-inu-walk-02.png',
+    ],
+    focus: [
+      '/animations/shiba-inu-idle-01.png',   // sitting alert
+      '/animations/shiba-inu-idle-02.png',   // standing
+      '/animations/shiba-inu-idle-01.png',
+    ],
+    rest: [
+      '/animations/shiba-inu-idle-03.png',   // lying down relaxed
+      '/animations/shiba-inu-idle-03.png',
+    ],
+    relax: [
+      '/animations/shiba-inu-walk-01.png',   // playful walking
+      '/animations/shiba-inu-walk-02.png',
+      '/animations/shiba-inu-idle-02.png',   // standing happy
+    ],
+    hatch: [
+      '/animations/egg-01.png',
+      '/animations/egg-02.png',
+      '/animations/egg-03.png',
+      '/animations/egg-04.png',
+      '/animations/egg-05.png',
+    ],
+  },
+  'cat': {
+    idle: [
+      '/animations/cat-idle-01.png',
+      '/animations/cat-idle-02.png',
+      '/animations/cat-idle-03.png',
+      '/animations/cat-idle-02.png',
+    ],
+    walk: [
+      '/animations/cat-walk-01.png',
+      '/animations/cat-walk-02.png',
+    ],
+    focus: [
+      '/animations/cat-idle-01.png',
+      '/animations/cat-idle-02.png',
+      '/animations/cat-idle-01.png',
+    ],
+    rest: [
+      '/animations/cat-idle-03.png',
+      '/animations/cat-idle-03.png',
+    ],
+    relax: [
+      '/animations/cat-walk-01.png',
+      '/animations/cat-walk-02.png',
+      '/animations/cat-idle-02.png',
+    ],
+    hatch: [
+      '/animations/egg-01.png',
+      '/animations/egg-02.png',
+      '/animations/egg-03.png',
+      '/animations/egg-04.png',
+      '/animations/egg-05.png',
+    ],
+  },
+  'rabbit': {
+    idle: [
+      '/animations/rabbit-idle-01.png',
+      '/animations/rabbit-idle-02.png',
+      '/animations/rabbit-idle-03.png',
+      '/animations/rabbit-idle-02.png',
+    ],
+    walk: [
+      '/animations/rabbit-walk-01.png',
+      '/animations/rabbit-walk-02.png',
+    ],
+    focus: [
+      '/animations/rabbit-idle-01.png',
+      '/animations/rabbit-idle-02.png',
+      '/animations/rabbit-idle-01.png',
+    ],
+    rest: [
+      '/animations/rabbit-idle-03.png',
+      '/animations/rabbit-idle-03.png',
+    ],
+    relax: [
+      '/animations/rabbit-walk-01.png',
+      '/animations/rabbit-walk-02.png',
+      '/animations/rabbit-idle-02.png',
+    ],
+    hatch: [
+      '/animations/egg-01.png',
+      '/animations/egg-02.png',
+      '/animations/egg-03.png',
+      '/animations/egg-04.png',
+      '/animations/egg-05.png',
+    ],
+  },
+  'fox': {
+    idle: [
+      '/animations/fox-idle-01.png',
+      '/animations/fox-idle-02.png',
+      '/animations/fox-idle-03.png',
+      '/animations/fox-idle-02.png',
+    ],
+    walk: [
+      '/animations/fox-walk-01.png',
+      '/animations/fox-walk-02.png',
+    ],
+    focus: [
+      '/animations/fox-idle-01.png',
+      '/animations/fox-idle-02.png',
+      '/animations/fox-idle-01.png',
+    ],
+    rest: [
+      '/animations/fox-idle-03.png',
+      '/animations/fox-idle-03.png',
+    ],
+    relax: [
+      '/animations/fox-walk-01.png',
+      '/animations/fox-walk-02.png',
+      '/animations/fox-idle-02.png',
+    ],
+    hatch: [
+      '/animations/egg-01.png',
+      '/animations/egg-02.png',
+      '/animations/egg-03.png',
+      '/animations/egg-04.png',
+      '/animations/egg-05.png',
+    ],
+  },
+};
+
+// Fallback for unknown species
+const FALLBACK_ANIMATIONS: Record<string, string[]> = {
   idle: [
     '/animations/idle-01.png',
     '/animations/idle-02.png',
@@ -36,6 +173,20 @@ const ANIMATION_FRAMES: Record<string, string[]> = {
     '/animations/walk-01.png',
     '/animations/walk-02.png',
   ],
+  focus: [
+    '/animations/idle-01.png',
+    '/animations/idle-02.png',
+    '/animations/idle-01.png',
+  ],
+  rest: [
+    '/animations/idle-03.png',
+    '/animations/idle-03.png',
+  ],
+  relax: [
+    '/animations/walk-01.png',
+    '/animations/walk-02.png',
+    '/animations/idle-02.png',
+  ],
   hatch: [
     '/animations/egg-01.png',
     '/animations/egg-02.png',
@@ -45,127 +196,101 @@ const ANIMATION_FRAMES: Record<string, string[]> = {
   ],
 };
 
-const PET_IMAGES: Record<string, string> = {
-  shiba: '/pets/shiba-inu.png',
-  cat: '/pets/cat.png',
-  rabbit: '/pets/rabbit.png',
-  fox: '/pets/fox.png',
-  penguin: '/pets/penguin.png',
-  panda: '/pets/panda.png',
-  dragon: '/pets/dragon.png',
-  robot: '/pets/robot.png',
-  alien: '/pets/alien.png',
-};
+function getFrames(species: string, animation: AnimationType): string[] {
+  const speciesAnims = SPECIES_ANIMATIONS[species] || {};
+  return speciesAnims[animation] || FALLBACK_ANIMATIONS[animation] || FALLBACK_ANIMATIONS.idle;
+}
 
-const SPEEDS: Record<AnimationType, number> = {
-  idle: 800,
-  walk: 400,
-  hatch: 600,
-  static: 0,
+/* ── CSS classes for animation effects ──── */
+const ANIMATION_CLASSES: Partial<Record<AnimationType, string>> = {
+  idle: 'animate-float',
+  walk: 'animate-bounce-subtle',
+  focus: 'animate-pulse-soft',
+  rest: 'animate-fade-in',
+  relax: 'animate-float',
+  hatch: 'animate-scale-in',
+  static: '',
 };
 
 export function PetSprite({
-  species = 'shiba',
+  species,
   animation,
   size = 128,
-  speed,
-  onHatchComplete,
   className = '',
+  frameRate = 600,
+  onHatchComplete,
 }: PetSpriteProps) {
-  const [frameIndex, setFrameIndex] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const [hatchDone, setHatchDone] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string>('');
+  const framesRef = useRef<string[]>([]);
+  const isHatching = animation === 'hatch';
 
-  const frames = animation === 'static'
-    ? [PET_IMAGES[species] || PET_IMAGES.shiba]
-    : ANIMATION_FRAMES[animation] || ANIMATION_FRAMES.idle;
-
-  const frameSpeed = speed || SPEEDS[animation];
+  const frames = getFrames(species, animation);
+  framesRef.current = frames;
 
   // Preload images
   useEffect(() => {
-    let mounted = true;
-    const imgs = frames.map((src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
+    setImagesLoaded(false);
+    setCurrentFrame(0);
+    const urls = frames;
+    Promise.all(
+      urls.map(
+        (url) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // don't block on missing images
+            img.src = url;
+          }),
+      ),
+    ).then(() => {
+      setImagesLoaded(true);
     });
-    // Wait for first frame to load
-    if (imgs[0]) {
-      imgs[0].onload = () => {
-        if (mounted) setLoaded(true);
-      };
-      imgs[0].onerror = () => {
-        if (mounted) setLoaded(true); // show anyway
-      };
-    } else {
-      setLoaded(true);
+  }, [species, animation]);
+
+  // Set initial image when frames change
+  useEffect(() => {
+    if (frames.length > 0) {
+      setImgSrc(frames[0]);
     }
-    return () => { mounted = false; };
   }, [frames]);
 
-  // Animation loop
+  // Frame loop
   useEffect(() => {
-    if (animation === 'static' || !loaded) return;
+    if (!imagesLoaded || frames.length === 0) return;
 
-    intervalRef.current = setInterval(() => {
-      setFrameIndex((prev) => {
-        const next = prev + 1;
-        if (next >= frames.length) {
-          if (animation === 'hatch') {
-            setHatchDone(true);
-            clearInterval(intervalRef.current);
-            return frames.length - 1; // stay on last frame
-          }
-          return 0; // loop
+    const timer = setInterval(() => {
+      setCurrentFrame((prev) => {
+        const next = (prev + 1) % frames.length;
+        setImgSrc(frames[next]);
+
+        // If hatch animation completed a full cycle
+        if (isHatching && next === 0 && onHatchComplete) {
+          onHatchComplete();
         }
+
         return next;
       });
-    }, frameSpeed);
+    }, frameRate);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [animation, loaded, frames.length, frameSpeed]);
+    return () => clearInterval(timer);
+  }, [imagesLoaded, frames, frameRate, isHatching, onHatchComplete]);
 
-  // Notify on hatch complete
-  useEffect(() => {
-    if (hatchDone && onHatchComplete) {
-      const timer = setTimeout(onHatchComplete, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [hatchDone, onHatchComplete]);
-
-  const currentSrc = frames[frameIndex] || frames[0];
+  const animClass = ANIMATION_CLASSES[animation] || '';
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl ${className}`}
+      className={`pet-sprite ${className}`}
       style={{ width: size, height: size }}
     >
-      {loaded ? (
-        <img
-          src={currentSrc}
-          alt="Pet"
-          className="w-full h-full object-cover transition-opacity duration-150"
-          style={{
-            imageRendering: 'auto',
-            opacity: loaded ? 1 : 0,
-          }}
-          draggable={false}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-surface-2 rounded-2xl">
-          <span className="text-3xl animate-bounce-gentle">🐾</span>
-        </div>
-      )}
-
-      {/* Soft vignette overlay */}
-      <div className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{
-          boxShadow: 'inset 0 0 20px rgba(26,24,20,0.3)',
-        }}
+      <img
+        src={imgSrc}
+        alt={`Pet ${animation}`}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${animClass} ${
+          imagesLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        draggable={false}
       />
     </div>
   );

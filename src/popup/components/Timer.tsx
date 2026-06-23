@@ -34,6 +34,17 @@ export function Timer() {
   const maxCards = getMaxForgivenessCards(playerProgress.level);
   const cardsRemaining = maxCards - cardsUsedToday;
 
+  // Map session type to pet animation
+  const getAnimation = () => {
+    if (!isRunning) return 'idle';
+    switch (currentSessionType) {
+      case 'work': return 'focus';
+      case 'shortBreak': return 'rest';
+      case 'longBreak': return 'relax';
+      default: return 'idle';
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-3 animate-fade-in">
       {/* Level & XP bar */}
@@ -110,7 +121,7 @@ export function Timer() {
             <div className={`${isRunning ? 'animate-float' : ''}`}>
               <PetSprite
                 species={pet.species}
-                animation={isRunning ? 'walk' : 'idle'}
+                animation={getAnimation()}
                 size={72}
                 className="shadow-lg"
               />
