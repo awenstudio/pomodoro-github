@@ -1,18 +1,33 @@
 /* ─────────────────────────────────────────────────────
- *  Stats — Daily/weekly statistics with charts,
- *  heatmap, and achievement display.
+ *  Stats — Daily/weekly statistics with heatmap,
+ *  achievements, and session history.
  * ───────────────────────────────────────────────────── */
 
 import { useTimer } from '../hooks/useTimer';
+import { Heatmap } from './Heatmap';
+import { Achievements } from './Achievements';
+import { loadDailyStats } from '@/lib/storage';
+import { useState, useEffect } from 'react';
+import type { DailyStats } from '@/types';
 
 export function Stats() {
   const { todayStats, streak, settings } = useTimer();
+  const [allStats, setAllStats] = useState<Record<string, DailyStats>>({});
+
+  useEffect(() => {
+    loadDailyStats().then(setAllStats);
+  }, []);
 
   const completedToday = todayStats?.completedPomodoros || 0;
   const focusMinutesToday = todayStats?.focusMinutes || 0;
-  const goalProgress = settings.dailyGoal > 0
-    ? Math.min(1, completedToday / settings.dailyGoal)
-    : 0;
+  const goalProgress =
+    settings.dailyGoal > 0
+      ? Math.min(1, completedToday / settings.dailyGoal)
+      : 0;
+
+  // Weekly stats
+  const weekStats = getWeekStats(allStats);
+  const monthStats = getMonthStats(allStats);
 
   return (
     <div className="flex flex-col gap-4 animate-fade-in">
@@ -54,9 +69,40 @@ export function Stats() {
         </div>
       </div>
 
+      {/* Weekly / Monthly summary */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="glass rounded-xl p-3">
+          <h3 className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+            This Week
+          </h3>
+          <div className="text-lg font-light text-white">
+            {weekStats.pomodoros}
+          </div>
+          <div className="text-[10px] text-gray-500">
+            {weekStats.minutes}m focus
+          </div>
+        </div>
+        <div className="glass rounded-xl p-3">
+          <h3 className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+            This Month
+          </h3>
+          <div className="text-lg font-light text-white">
+            {monthStats.pomodoros}
+          </div>
+          <div className="text-[10px] text-gray-500">
+            {monthStats.minutes}m focus
+          </div>
+        </div>
+      </div>
+
+      {/* Heatmap */}
+      <Heatmap dailyStats={allStats} />
+
       {/* Session history (today) */}
       <div className="glass rounded-xl p-3">
-        <h3 className="text-xs font-medium text-gray-400 mb-2">Today's Sessions</h3>
+        <h3 className="text-xs font-medium text-gray-400 mb-2">
+          Today's Sessions
+        </h3>
         {todayStats?.sessions.length ? (
           <div className="flex flex-wrap gap-1.5">
             {todayStats.sessions.map((session, i) => (
@@ -76,26 +122,77 @@ export function Stats() {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-600 italic">No sessions yet today</p>
+          <p className="text-xs text-gray-600 italic">
+            No sessions yet today
+          </p>
         )}
       </div>
+
+      {/* Achievements */}
+      <Achievements dailyStats={allStats} streak={streak} />
 
       {/* Streak info */}
       <div className="glass rounded-xl p-3">
         <h3 className="text-xs font-medium text-gray-400 mb-2">Streak</h3>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-2xl font-light text-white">{streak.current}</span>
+            <span className="text-2xl font-light text-white">
+              {streak.current}
+            </span>
             <span className="text-xs text-gray-500 ml-1">days</span>
           </div>
           <div className="text-right">
             <span className="text-xs text-gray-500">Best: </span>
-            <span className="text-sm font-mono text-white">{streak.longest}</span>
+            <span className="text-sm font-mono text-white">
+              {streak.longest}
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+/* ── Helpers ───────────────────────────────────────── */
+
+function getWeekStats(allStats: Record<string, DailyStats>) {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - dayOfWeek);
+
+  let pomodoros = 0;
+  let minutes = 0;
+
+  for (let i = 0; i <= dayOfWeek; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const key = d.toISOString().split('T')[0];
+    const stats = allStats[key];
+    if (stats) {
+      pomodoros += stats.completedPomodoros;
+      minutes += stats.focusMinutes;
+    }
+  }
+
+  return { pomodoros, minutes };
+}
+
+function getMonthStats(allStats: Record<string, DailyStats>) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let pomodoros = 0;
+  let minutes = 0;
+
+  for (const [date, stats] of Object.entries(allStats)) {
+    if (new Date(date) >= startOfMonth) {
+      pomodoros += stats.completedPomodoros;
+      minutes += stats.focusMinutes;
+    }
+  }
+
+  return { pomodoros, minutes };
 }
 
 /* ── Stat Card ─────────────────────────────────────── */

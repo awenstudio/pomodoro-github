@@ -61,12 +61,11 @@ export function Settings() {
             min={1}
             max={120}
             value={Math.round(localSettings.workDuration / 60)}
-            onChange={(e) =>
-              setLocalSettings((s) => ({
-                ...s,
-                workDuration: parseInt(e.target.value || '25', 10) * 60,
-              }))
-            }
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (isNaN(v) || v < 1) return;
+              setLocalSettings((s) => ({ ...s, workDuration: v * 60 }));
+            }}
           />
         </SettingRow>
         <SettingRow label="Short Break (min)">
@@ -76,12 +75,11 @@ export function Settings() {
             min={1}
             max={30}
             value={Math.round(localSettings.shortBreakDuration / 60)}
-            onChange={(e) =>
-              setLocalSettings((s) => ({
-                ...s,
-                shortBreakDuration: parseInt(e.target.value || '5', 10) * 60,
-              }))
-            }
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (isNaN(v) || v < 1) return;
+              setLocalSettings((s) => ({ ...s, shortBreakDuration: v * 60 }));
+            }}
           />
         </SettingRow>
         <SettingRow label="Long Break (min)">
@@ -91,12 +89,11 @@ export function Settings() {
             min={1}
             max={60}
             value={Math.round(localSettings.longBreakDuration / 60)}
-            onChange={(e) =>
-              setLocalSettings((s) => ({
-                ...s,
-                longBreakDuration: parseInt(e.target.value || '15', 10) * 60,
-              }))
-            }
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (isNaN(v) || v < 1) return;
+              setLocalSettings((s) => ({ ...s, longBreakDuration: v * 60 }));
+            }}
           />
         </SettingRow>
         <SettingRow label="Long Break After">
@@ -106,12 +103,11 @@ export function Settings() {
             min={2}
             max={10}
             value={localSettings.longBreakInterval}
-            onChange={(e) =>
-              setLocalSettings((s) => ({
-                ...s,
-                longBreakInterval: parseInt(e.target.value || '4', 10),
-              }))
-            }
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (isNaN(v) || v < 2) return;
+              setLocalSettings((s) => ({ ...s, longBreakInterval: v }));
+            }}
           />
         </SettingRow>
         <SettingRow label="Daily Goal">
@@ -121,12 +117,11 @@ export function Settings() {
             min={1}
             max={20}
             value={localSettings.dailyGoal}
-            onChange={(e) =>
-              setLocalSettings((s) => ({
-                ...s,
-                dailyGoal: parseInt(e.target.value || '8', 10),
-              }))
-            }
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (isNaN(v) || v < 1) return;
+              setLocalSettings((s) => ({ ...s, dailyGoal: v }));
+            }}
           />
         </SettingRow>
       </Section>

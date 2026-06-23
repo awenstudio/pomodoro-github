@@ -71,12 +71,18 @@ export async function loadSessions(): Promise<TimerSession[]> {
   return get<TimerSession[]>(STORAGE_KEY_SESSIONS, []);
 }
 
+// Write queue to prevent race conditions on concurrent adds
+let sessionWriteQueue: Promise<void> = Promise.resolve();
+
 export async function addSession(session: TimerSession): Promise<void> {
-  const sessions = await loadSessions();
-  sessions.push(session);
-  // Keep last 1000 sessions to bound storage
-  const trimmed = sessions.length > 1000 ? sessions.slice(-1000) : sessions;
-  await set(STORAGE_KEY_SESSIONS, trimmed);
+  sessionWriteQueue = sessionWriteQueue.then(async () => {
+    const sessions = await loadSessions();
+    sessions.push(session);
+    // Keep last 1000 sessions to bound storage
+    const trimmed = sessions.length > 1000 ? sessions.slice(-1000) : sessions;
+    await set(STORAGE_KEY_SESSIONS, trimmed);
+  });
+  return sessionWriteQueue;
 }
 
 /* ── Daily Stats ───────────────────────────────────── */

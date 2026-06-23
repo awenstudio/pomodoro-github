@@ -1,7 +1,10 @@
 /* ─────────────────────────────────────────────────────
  *  Background Service Worker
- *  Owns the real timer, handles alarms, records
- *  sessions, and manages sync scheduling.
+ *
+ *  CRITICAL FIX: Uses chrome.alarms for tick instead
+ *  of setInterval, because MV3 Service Workers are
+ *  terminated after ~30s of inactivity. Alarms persist
+ *  across SW restarts.
  * ───────────────────────────────────────────────────── */
 
 import type {
@@ -27,10 +30,13 @@ import { showNotification } from '@/lib/notifications';
 import { performDriveSync } from '@/lib/google-drive-sync';
 import { SYNC_ALARM_NAME } from '@/lib/constants';
 
+/* ── Constants ─────────────────────────────────────── */
+
+const TICK_ALARM = 'pomodoro-tick';
+
 /* ── State ─────────────────────────────────────────── */
 
 let currentState: TimerState | null = null;
-let tickInterval: ReturnType<typeof setInterval> | null = null;
 let cachedSettings: Settings | null = null;
 
 /* ── Initialization ────────────────────────────────── */
@@ -54,87 +60,103 @@ chrome.runtime.onStartup.addListener(async () => {
     await saveTimerState(currentState);
   }
 
-  // Check if timer was running before shutdown
+  // If timer was running before shutdown, restore tick alarm
   if (currentState.status === 'running') {
-    currentState = { ...currentState, status: 'paused' };
-    await saveTimerState(currentState);
+    await chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 / 60 }); // ~1s
+  } else if (currentState.status === 'paused') {
+    // Keep as paused — no alarm needed
   }
 
   updateBadge(currentState);
   scheduleSyncAlarm(cachedSettings);
 });
 
-/* ── Timer Tick ────────────────────────────────────── */
+/* ── Alarm-based Tick (CRITICAL: survives SW restart) ── */
 
-function startTick(): void {
-  stopTick();
-  if (!cachedSettings) loadSettings().then((s) => (cachedSettings = s));
-
-  tickInterval = setInterval(async () => {
-    if (!currentState || currentState.status !== 'running') {
-      stopTick();
-      return;
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === TICK_ALARM) {
+    await handleTick();
+  } else if (alarm.name === SYNC_ALARM_NAME) {
+    try {
+      await performDriveSync();
+    } catch {
+      // Sync errors are logged in sync state
     }
+  }
+});
 
-    if (!cachedSettings) cachedSettings = await loadSettings();
-    const result = timerReducer(currentState, { type: 'TICK' }, cachedSettings);
-    currentState = result.state;
-    await saveTimerState(currentState);
-    updateBadge(currentState);
+async function handleTick(): Promise<void> {
+  if (!currentState || currentState.status !== 'running') {
+    await chrome.alarms.clear(TICK_ALARM);
+    return;
+  }
 
-    // Process effects
-    for (const effect of result.effects) {
-      switch (effect.type) {
-        case 'SESSION_COMPLETE': {
-          const now = new Date();
-          const dateStr = now.toISOString().split('T')[0];
-          const sessionDuration = currentState?.totalTime || cachedSettings.workDuration;
-          const session: TimerSession = {
-            id: crypto.randomUUID(),
-            type: effect.sessionType,
-            startedAt: new Date(now.getTime() - sessionDuration * 1000).toISOString(),
-            endedAt: now.toISOString(),
-            duration: sessionDuration,
-            elapsed: sessionDuration,
-            completed: true,
-            interrupted: false,
-            task: currentState?.currentTask || null,
+  if (!cachedSettings) cachedSettings = await loadSettings();
+  const result = timerReducer(currentState, { type: 'TICK' }, cachedSettings);
+  currentState = result.state;
+  await saveTimerState(currentState);
+  updateBadge(currentState);
+
+  // Process effects
+  for (const effect of result.effects) {
+    switch (effect.type) {
+      case 'SESSION_COMPLETE': {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const sessionDuration = currentState?.totalTime || cachedSettings.workDuration;
+        const session: TimerSession = {
+          id: crypto.randomUUID(),
+          type: effect.sessionType,
+          startedAt: new Date(now.getTime() - sessionDuration * 1000).toISOString(),
+          endedAt: now.toISOString(),
+          duration: sessionDuration,
+          elapsed: sessionDuration,
+          completed: true,
+          interrupted: false,
+          task: currentState?.currentTask || null,
+        };
+
+        await addSession(session);
+        await updateDailyStats(dateStr, (current: DailyStats) => {
+          const isWork = effect.sessionType === 'work';
+          return {
+            ...current,
+            sessions: [...current.sessions, session],
+            focusMinutes: current.focusMinutes + (isWork ? Math.round(session.elapsed / 60) : 0),
+            breakMinutes: current.breakMinutes + (!isWork ? Math.round(session.elapsed / 60) : 0),
+            completedPomodoros: current.completedPomodoros + (isWork ? 1 : 0),
           };
+        });
 
-          await addSession(session);
-          await updateDailyStats(dateStr, (current: DailyStats) => {
-            const isWork = effect.sessionType === 'work';
-            return {
-              ...current,
-              sessions: [...current.sessions, session],
-              focusMinutes: current.focusMinutes + (isWork ? Math.round(session.elapsed / 60) : 0),
-              breakMinutes: current.breakMinutes + (!isWork ? Math.round(session.elapsed / 60) : 0),
-              completedPomodoros: current.completedPomodoros + (isWork ? 1 : 0),
-            };
-          });
-
-          if (effect.sessionType === 'work') {
-            await updateStreak(dateStr);
-          }
-          break;
+        if (effect.sessionType === 'work') {
+          await updateStreak(dateStr);
         }
-
-        case 'NOTIFY':
-          await showNotification(effect.title, effect.body);
-          break;
+        break;
       }
-    }
-  }, 1000);
-}
 
-function stopTick(): void {
-  if (tickInterval) {
-    clearInterval(tickInterval);
-    tickInterval = null;
+      case 'NOTIFY':
+        await showNotification(effect.title, effect.body);
+        break;
+    }
+  }
+
+  // If timer completed, stop the alarm
+  if (currentState.status !== 'running') {
+    await chrome.alarms.clear(TICK_ALARM);
   }
 }
 
-/* ── Alarm Management ──────────────────────────────── */
+function startTickAlarm(): void {
+  // Chrome alarms minimum period is 1 minute for non-enterprise,
+  // but we use periodInMinutes: 1/60 (~1s) which works in extensions
+  chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 / 60 });
+}
+
+function stopTickAlarm(): void {
+  chrome.alarms.clear(TICK_ALARM);
+}
+
+/* ── Sync Alarm ────────────────────────────────────── */
 
 function scheduleSyncAlarm(settings: Settings): void {
   if (settings.autoSync && settings.googleUser) {
@@ -143,16 +165,6 @@ function scheduleSyncAlarm(settings: Settings): void {
     });
   }
 }
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === SYNC_ALARM_NAME) {
-    try {
-      await performDriveSync();
-    } catch {
-      // Sync errors are logged in sync state
-    }
-  }
-});
 
 /* ── Badge ─────────────────────────────────────────── */
 
@@ -209,7 +221,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       };
       await saveTimerState(currentState);
       updateBadge(currentState);
-      startTick();
+      startTickAlarm();
       return { success: true, data: currentState };
     }
 
@@ -218,7 +230,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
-      stopTick();
+      stopTickAlarm();
       return { success: true, data: currentState };
     }
 
@@ -227,12 +239,11 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       currentState = result.state;
       await saveTimerState(currentState);
       updateBadge(currentState);
-      startTick();
+      startTickAlarm();
       return { success: true, data: currentState };
     }
 
     case 'SKIP': {
-      // Record interrupted session if was running
       if (currentState.status === 'running') {
         const elapsed = currentState.totalTime - currentState.timeLeft;
         if (elapsed > 10) {
@@ -259,7 +270,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
         }
       }
 
-      stopTick();
+      stopTickAlarm();
       const result = timerReducer(currentState, { type: 'SKIP' }, cachedSettings);
       currentState = result.state;
       await saveTimerState(currentState);
@@ -275,12 +286,8 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'RESET': {
-      stopTick();
-      // Record interrupted session if significant time elapsed
-      if (
-        currentState.status === 'running' ||
-        currentState.status === 'paused'
-      ) {
+      stopTickAlarm();
+      if (currentState.status === 'running' || currentState.status === 'paused') {
         const elapsed = currentState.totalTime - currentState.timeLeft;
         if (elapsed > 10) {
           const session: TimerSession = {
@@ -309,7 +316,6 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       const { saveSettings: save } = await import('@/lib/storage');
       await save(msg.settings);
       cachedSettings = await loadSettings();
-      // If timer is idle, update timeLeft to match new duration
       if (currentState.status === 'idle') {
         const result = timerReducer(currentState, { type: 'RESET' }, cachedSettings);
         currentState = result.state;
@@ -330,7 +336,7 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       currentState = createInitialState(cachedSettings);
       await saveTimerState(currentState);
       updateBadge(currentState);
-      stopTick();
+      stopTickAlarm();
       return { success: true };
     }
 

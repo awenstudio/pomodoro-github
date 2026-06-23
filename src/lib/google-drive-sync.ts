@@ -40,14 +40,26 @@ async function apiFetch(
   });
 
   if (res.status === 401) {
-    // Token expired — try to refresh
+    // Token expired — remove cached token so chrome.identity fetches a fresh one
     await new Promise<void>((resolve) => {
-      chrome.identity.removeCachedAuthToken(
-        { token },
-        resolve,
-      );
+      chrome.identity.removeCachedAuthToken({ token }, resolve);
     });
-    throw new DriveSyncError('TOKEN_EXPIRED', 'Auth token expired, please retry');
+    // Get a fresh token (non-interactive to avoid popup)
+    const freshToken = await new Promise<string | undefined>((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, resolve);
+    });
+    if (freshToken && freshToken !== token) {
+      // Retry with fresh token
+      return fetch(url, {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${freshToken}`,
+          'Content-Type': 'application/json',
+          ...init?.headers,
+        },
+      });
+    }
+    throw new DriveSyncError('TOKEN_EXPIRED', 'Auth token expired, please sign in again');
   }
 
   if (res.status === 429 || res.status === 503) {
