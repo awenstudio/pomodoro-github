@@ -5,23 +5,30 @@
  *  Architecture: Background is the single source of
  *  truth for timer state. Popup listens via
  *  chrome.storage.onChanged for real-time updates.
+ *
+ *  RESILIENCE: All chrome.runtime.sendMessage calls
+ *  are wrapped in try/catch so UI never breaks.
  * ───────────────────────────────────────────────────── */
 
 import { useEffect, useCallback } from 'react';
 import { useTimerStore } from '@/stores/timer-store';
-import type { MessageType, MessageResponse, TaskRef } from '@/types';
+import type { MessageType, MessageResponse, TaskRef, PlayerProgress } from '@/types';
 
 /* ── Message helper ────────────────────────────────── */
 
 function sendMessage<T = unknown>(msg: MessageType): Promise<MessageResponse<T>> {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(msg, (response: MessageResponse<T>) => {
-      if (chrome.runtime.lastError) {
-        resolve({ success: false, error: chrome.runtime.lastError.message });
-      } else {
-        resolve(response);
-      }
-    });
+    try {
+      chrome.runtime.sendMessage(msg, (response: MessageResponse<T>) => {
+        if (chrome.runtime.lastError) {
+          resolve({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          resolve(response || { success: false, error: 'No response' });
+        }
+      });
+    } catch (err) {
+      resolve({ success: false, error: (err as Error).message });
+    }
   });
 }
 
@@ -33,33 +40,36 @@ export function useTimer() {
   /* ── State sync from background ──────────────────── */
 
   const syncState = useCallback(async () => {
-    const response = await sendMessage<Record<string, unknown>>({ type: 'GET_STATE' });
+    try {
+      const response = await sendMessage<Record<string, unknown>>({ type: 'GET_STATE' });
 
-    if (response.success && response.data) {
-      const data = response.data as Record<string, unknown>;
-      if (data.timer) store.setTimerState(data.timer as typeof store.timer);
-      if (data.settings) store.setSettings(data.settings as typeof store.settings);
-      if (data.todayStats) store.setTodayStats(data.todayStats as typeof store.todayStats);
-      if (data.streak) store.setStreak(data.streak as typeof store.streak);
-      if (data.syncState) store.setSyncState(data.syncState as typeof store.syncState);
-      if (data.progress) store.setProgress(data.progress as import('@/types').PlayerProgress);
+      if (response.success && response.data) {
+        const data = response.data;
+        if (data.timer) store.setTimerState(data.timer as typeof store.timer);
+        if (data.settings) store.setSettings(data.settings as typeof store.settings);
+        if (data.todayStats) store.setTodayStats(data.todayStats as typeof store.todayStats);
+        if (data.streak) store.setStreak(data.streak as typeof store.streak);
+        if (data.syncState) store.setSyncState(data.syncState as typeof store.syncState);
+        if (data.progress) store.setProgress(data.progress as PlayerProgress);
+      }
+    } catch {
+      // Background not ready — UI still works with local state
     }
-  }, []); // store is a stable Zustand reference
+  }, []); // store is stable
 
-  // Initial sync on mount
+  // Initial sync
   useEffect(() => {
     syncState();
   }, [syncState]);
 
-  // Re-sync when popup regains focus (handles tab switch, popup reopen)
+  // Re-sync on focus
   useEffect(() => {
     const handleFocus = () => syncState();
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [syncState]);
 
-  // Listen for real-time storage changes from background
-  // This is the ONLY source of timer ticks in the popup — no local countdown
+  // Listen for storage changes from background
   useEffect(() => {
     const listener = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -67,37 +77,38 @@ export function useTimer() {
     ) => {
       if (area !== 'local') return;
 
-      if (changes.pomodoro_timer_state) {
-        const newState = changes.pomodoro_timer_state.newValue;
-        if (newState) {
-          store.setTimerState(newState);
+      try {
+        if (changes.pomodoro_timer_state) {
+          const val = changes.pomodoro_timer_state.newValue;
+          if (val) store.setTimerState(val);
         }
-      }
-
-      if (changes.pomodoro_daily_stats) {
-        const today = new Date().toISOString().split('T')[0];
-        const stats = changes.pomodoro_daily_stats.newValue;
-        if (stats?.[today]) {
-          store.setTodayStats(stats[today]);
+        if (changes.pomodoro_daily_stats) {
+          const today = new Date().toISOString().split('T')[0];
+          const stats = changes.pomodoro_daily_stats.newValue;
+          if (stats?.[today]) store.setTodayStats(stats[today]);
         }
-      }
-
-      if (changes.pomodoro_streak) {
-        const streak = changes.pomodoro_streak.newValue;
-        if (streak) store.setStreak(streak);
-      }
-
-      if (changes.pomodoro_sync_state) {
-        const syncState = changes.pomodoro_sync_state.newValue;
-        if (syncState) store.setSyncState(syncState);
+        if (changes.pomodoro_streak) {
+          const val = changes.pomodoro_streak.newValue;
+          if (val) store.setStreak(val);
+        }
+        if (changes.pomodoro_sync_state) {
+          const val = changes.pomodoro_sync_state.newValue;
+          if (val) store.setSyncState(val);
+        }
+        if (changes.pomodoro_progress) {
+          const val = changes.pomodoro_progress.newValue;
+          if (val) store.setProgress(val);
+        }
+      } catch {
+        // Ignore storage listener errors
       }
     };
 
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
-  }, []); // stable
+  }, []);
 
-  /* ── Actions ─────────────────────────────────────── */
+  /* ── Actions (all wrapped in try/catch) ──────────── */
 
   const start = useCallback(async (task?: TaskRef) => {
     const response = await sendMessage({ type: 'START', task });
@@ -158,10 +169,7 @@ export function useTimer() {
   }, [syncState]);
 
   return {
-    // State (spread from Zustand store — all reactive)
     ...store,
-
-    // Actions (named to avoid collision with store.syncState)
     start,
     pause,
     resume,

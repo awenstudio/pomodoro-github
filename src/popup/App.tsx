@@ -1,9 +1,5 @@
 /* ─────────────────────────────────────────────────────
- *  App — Root component.
- *
- *  Design: Timer is the default tab. Everything works
- *  without login. Google sync is optional, surfaced
- *  gently in Settings.
+ *  App — Root component with animated tab transitions.
  * ───────────────────────────────────────────────────── */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,12 +14,18 @@ type Tab = 'timer' | 'stats' | 'settings';
 
 const STORAGE_KEY_ONBOARDED = 'pomodoro_onboarded';
 
+const TABS: { id: Tab; icon: string; label: string }[] = [
+  { id: 'timer', icon: '⏱', label: 'Timer' },
+  { id: 'stats', icon: '📊', label: 'Stats' },
+  { id: 'settings', icon: '⚙️', label: 'Settings' },
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('timer');
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
   const timer = useTimer();
 
-  // Check if user has completed onboarding
   useEffect(() => {
     chrome.storage.local.get(STORAGE_KEY_ONBOARDED, (result) => {
       setOnboarded(!!result[STORAGE_KEY_ONBOARDED]);
@@ -35,7 +37,14 @@ export default function App() {
     setOnboarded(true);
   }, []);
 
-  // Loading state
+  const handleTabChange = useCallback((newTab: Tab) => {
+    if (newTab === activeTab) return;
+    const oldIndex = TABS.findIndex((t) => t.id === activeTab);
+    const newIndex = TABS.findIndex((t) => t.id === newTab);
+    setTabDirection(newIndex > oldIndex ? 'right' : 'left');
+    setActiveTab(newTab);
+  }, [activeTab]);
+
   if (onboarded === null) {
     return (
       <div className="flex items-center justify-center min-h-[520px]">
@@ -44,7 +53,6 @@ export default function App() {
     );
   }
 
-  // Onboarding flow
   if (!onboarded) {
     return (
       <ErrorBoundary>
@@ -57,8 +65,8 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col min-h-[520px]">
-        {/* Header — minimal, no login pressure */}
+      <div className="flex flex-col min-h-[520px] overflow-hidden">
+        {/* Header */}
         <header className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <span className="text-lg">🍅</span>
@@ -66,8 +74,6 @@ export default function App() {
               Pomodoro
             </h1>
           </div>
-
-          {/* Sync indicator — only visible when logged in */}
           {isLoggedIn && (
             <button
               onClick={timer.syncNow}
@@ -103,35 +109,57 @@ export default function App() {
           )}
         </header>
 
-        {/* Tab content */}
-        <main className="flex-1 px-4 pb-2">
-          <ErrorBoundary>
-            {activeTab === 'timer' && <Timer />}
-            {activeTab === 'stats' && <Stats />}
-            {activeTab === 'settings' && <Settings />}
-          </ErrorBoundary>
+        {/* Tab content with slide animation */}
+        <main className="flex-1 px-4 pb-2 relative overflow-hidden">
+          <div
+            key={activeTab}
+            className={`animate-tab-${tabDirection} h-full`}
+          >
+            <ErrorBoundary>
+              {activeTab === 'timer' && <Timer />}
+              {activeTab === 'stats' && <Stats />}
+              {activeTab === 'settings' && <Settings />}
+            </ErrorBoundary>
+          </div>
         </main>
 
-        {/* Tab bar */}
-        <nav className="flex items-center justify-center gap-1 px-4 py-3 border-t border-white/5">
-          {([
-            { id: 'timer' as Tab, icon: '⏱', label: 'Timer' },
-            { id: 'stats' as Tab, icon: '📊', label: 'Stats' },
-            { id: 'settings' as Tab, icon: '⚙️', label: 'Settings' },
-          ]).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs transition-all duration-150 ${
-                activeTab === tab.id
-                  ? 'bg-white/8 text-white'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        {/* Tab bar with animated indicator */}
+        <nav className="relative px-4 py-3 border-t border-white/5">
+          {/* Animated underline indicator */}
+          <div
+            className="absolute top-0 h-[2px] bg-tomato-500 rounded-full transition-all duration-300 ease-out"
+            style={{
+              left: `${(TABS.findIndex((t) => t.id === activeTab) / TABS.length) * 100}%`,
+              width: `${100 / TABS.length}%`,
+            }}
+          />
+
+          <div className="flex items-center justify-center gap-1">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs
+                    transition-all duration-200 ease-out
+                    ${isActive
+                      ? 'text-white scale-105'
+                      : 'text-gray-500 hover:text-gray-300 active:scale-95'
+                    }`}
+                >
+                  <span
+                    className={`transition-transform duration-200 ${
+                      isActive ? 'scale-110' : ''
+                    }`}
+                  >
+                    {tab.icon}
+                  </span>
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </nav>
       </div>
     </ErrorBoundary>

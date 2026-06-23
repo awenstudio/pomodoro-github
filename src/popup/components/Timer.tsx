@@ -82,8 +82,21 @@ export function Timer() {
       </div>
 
       {/* Circular timer */}
-      <div className="relative w-52 h-52">
+      <div className={`relative w-52 h-52 ${isRunning ? 'animate-float' : ''}`}>
         <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
+          {/* Glow background circle (only when running) */}
+          {isRunning && (
+            <circle
+              cx="100"
+              cy="100"
+              r="88"
+              fill="none"
+              stroke={mode.ringColor}
+              strokeWidth="12"
+              opacity="0.08"
+              className="animate-pulse"
+            />
+          )}
           <circle
             cx="100"
             cy="100"
@@ -104,7 +117,10 @@ export function Timer() {
             strokeDashoffset={dashOffset}
             className="timer-ring"
             style={{
-              filter: isRunning ? `drop-shadow(0 0 8px ${mode.ringColor}40)` : 'none',
+              filter: isRunning
+                ? `drop-shadow(0 0 12px ${mode.ringColor}60)`
+                : 'none',
+              transition: 'filter 0.5s ease',
             }}
           />
         </svg>
@@ -123,16 +139,17 @@ export function Timer() {
         </div>
       </div>
 
-      {/* Progress dots */}
+      {/* Progress dots with stagger animation */}
       <div className="flex items-center gap-2">
         {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
           <div
             key={i}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
               i < pomodorosInCycle
-                ? 'bg-tomato-500 shadow-sm shadow-tomato-500/40'
-                : 'bg-surface-3'
+                ? 'bg-tomato-500 shadow-sm shadow-tomato-500/40 scale-110'
+                : 'bg-surface-3 scale-100'
             }`}
+            style={{ transitionDelay: `${i * 80}ms` }}
           />
         ))}
       </div>

@@ -54,7 +54,7 @@ export function Stats() {
       </div>
 
       {/* Daily goal progress */}
-      <div className="glass rounded-xl p-3">
+      <div className="glass rounded-xl p-3 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-gray-400">Daily Goal</span>
           <span className="text-xs font-mono text-white">
@@ -209,7 +209,7 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="glass rounded-xl p-3 text-center">
+    <div className="glass rounded-xl p-3 text-center hover-lift cursor-default">
       <div className="text-lg mb-0.5">{icon}</div>
       <div className={`text-xl font-light ${accent}`}>{value}</div>
       <div className="text-[10px] text-gray-500 mt-0.5">{label}</div>
