@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Google Fonts ───────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -14,8 +17,12 @@
     max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #1A1814;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1F1C18;
+    /* Subtle paper texture overlay */
+    background-image: 
+      radial-gradient(ellipse at 20% 0%, rgba(90,175,94,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(255,159,74,0.04) 0%, transparent 50%);
   }
 
   ::-webkit-scrollbar {
@@ -27,60 +34,83 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 248, 230, 0.12);
+    background: rgba(255, 248, 230, 0.1);
     border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 248, 230, 0.2);
+    background: rgba(255, 248, 230, 0.18);
   }
 }
 
 @layer components {
-  /* ── Glass Card (warm-tinted) ── */
+  /* ── Glass Card (warm-tinted, softer) ── */
   .glass {
-    background: rgba(255, 248, 230, 0.04);
+    background: rgba(255, 248, 230, 0.035);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 248, 230, 0.08);
+    border: 1px solid rgba(255, 248, 230, 0.06);
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 248, 230, 0.03);
   }
 
   .glass-hover:hover {
-    background: rgba(255, 248, 230, 0.07);
+    background: rgba(255, 248, 230, 0.06);
+    border-color: rgba(255, 248, 230, 0.08);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 248, 230, 0.05);
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply bg-moss-600 hover:bg-moss-500 active:bg-moss-700
-           text-white font-medium rounded-2xl
+    @apply font-display font-semibold rounded-soft
            transition-all duration-200 ease-out
-           hover:shadow-lg hover:shadow-moss-600/20
-           active:scale-[0.96];
+           hover:shadow-glow active:scale-[0.96];
+    background: linear-gradient(135deg, #4D8B3E, #3D7030);
+    color: white;
+    box-shadow: 0 2px 12px rgba(77, 139, 62, 0.25);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #6FA85C, #4D8B3E);
+    box-shadow: 0 4px 20px rgba(77, 139, 62, 0.35);
   }
 
   .btn-secondary {
-    @apply bg-surface-3 hover:bg-surface-4 active:bg-surface-2
-           text-gray-300 hover:text-white
-           rounded-2xl transition-all duration-200 ease-out
+    @apply font-display font-medium rounded-soft
+           transition-all duration-200 ease-out
            active:scale-[0.96];
+    background: rgba(255, 248, 230, 0.06);
+    color: rgba(255, 248, 230, 0.7);
+    border: 1px solid rgba(255, 248, 230, 0.06);
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 248, 230, 0.09);
+    color: white;
   }
 
   .btn-ghost {
-    @apply text-gray-400 hover:text-cream-100 hover:bg-cream-100/5
-           rounded-xl transition-all duration-200;
+    @apply font-display font-medium rounded-soft
+           transition-all duration-200;
+    color: rgba(255, 248, 230, 0.45);
   }
-
-  .btn-warm {
-    @apply bg-tea-500/20 hover:bg-tea-500/30 text-tea-300
-           rounded-2xl transition-all duration-200
-           active:scale-[0.96];
+  .btn-ghost:hover {
+    color: rgba(255, 248, 230, 0.8);
+    background: rgba(255, 248, 230, 0.04);
   }
 
   /* ── Inputs ── */
   .setting-input {
-    @apply w-16 px-2 py-1 text-center text-sm
-           bg-surface-2 border border-cream-100/10 rounded-xl
-           text-cream-100 focus:outline-none focus:border-moss-500
-           transition-colors duration-200;
+    @apply w-16 px-2 py-1 text-center text-sm font-body
+           rounded-soft transition-colors duration-200;
+    background: rgba(255, 248, 230, 0.04);
+    border: 1px solid rgba(255, 248, 230, 0.08);
+    color: rgba(255, 248, 230, 0.85);
+  }
+  .setting-input:focus {
+    outline: none;
+    border-color: rgba(90, 175, 94, 0.5);
+    box-shadow: 0 0 0 2px rgba(90, 175, 94, 0.1);
   }
 }
 
@@ -89,147 +119,11 @@
 .will-change-transform {
   will-change: transform;
 }
-
 .will-change-[width] {
   will-change: width;
 }
-
 .will-change-[opacity] {
   will-change: opacity;
-}
-
-/* ── Utility Animations ───────────────────────────── */
-
-.animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: glowPulse 2.5s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 248, 230, 0.04) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2.5s linear infinite;
-}
-
-/* ── Spring Animations ────────────────────────────── */
-
-.animate-spring-in {
-  animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.animate-bounce-subtle {
-  animation: bounceSubtle 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.animate-pulse-soft {
-  animation: pulseSoft 2s ease-in-out infinite;
-}
-
-/* ── Keyframes ────────────────────────────────────── */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes springIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3) translateY(20px);
-  }
-  50% {
-    transform: scale(1.05) translateY(-4px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes bounceSubtle {
-  0% {
-    transform: scale(1);
-  }
-  40% {
-    transform: scale(1.08);
-  }
-  60% {
-    transform: scale(0.96);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes pulseSoft {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.02);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(90, 175, 94, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 24px rgba(90, 175, 94, 0.3);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
 }
 
 /* ── Hover Effects ─────────────────────────────────── */
@@ -238,7 +132,6 @@
   .text-balance {
     text-wrap: balance;
   }
-
   .hover-lift {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
@@ -246,16 +139,11 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   }
-
   .press-scale {
     transition: transform 0.12s ease;
   }
   .press-scale:active {
     transform: scale(0.95);
-  }
-
-  .warm-glow {
-    box-shadow: 0 0 20px rgba(255, 159, 74, 0.15);
   }
 }
 
@@ -264,7 +152,6 @@
 .transition-spring {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -284,10 +171,9 @@
   border: 1px solid rgba(255, 248, 230, 0.06);
   border-radius: 1rem;
 }
-
 .glass-card-hover:hover {
-  background: rgba(255, 248, 230, 0.06);
-  border-color: rgba(255, 248, 230, 0.1);
+  background: rgba(255, 248, 230, 0.05);
+  border-color: rgba(255, 248, 230, 0.08);
 }
 
 /* ── Stat Pill ─────────────────────────────────────── */
@@ -304,10 +190,26 @@
   color: rgba(255, 248, 230, 0.5);
   transition: all 0.2s ease;
 }
-
 .stat-pill:hover {
   background: rgba(255, 248, 230, 0.07);
   border-color: rgba(255, 248, 230, 0.1);
+}
+
+/* ── Warm Glow Signature ──────────────────────────── */
+
+.warm-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  opacity: 0.4;
+  animation: glowDrift 8s ease-in-out infinite alternate;
+}
+
+@keyframes glowDrift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5px, -3px) scale(1.05); }
+  100% { transform: translate(-3px, 5px) scale(0.95); }
 }
 
 /* ── Focus Mode Indicator ─────────────────────────── */
@@ -315,7 +217,6 @@
 .focus-indicator {
   position: relative;
 }
-
 .focus-indicator::after {
   content: '';
   position: absolute;
@@ -324,11 +225,10 @@
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background: var(--accent-color, #5AAF5E);
+  background: var(--accent-color, #4D8B3E);
   border-radius: 1px;
   transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 .focus-indicator.active::after {
   width: 80%;
 }
@@ -339,16 +239,14 @@
   position: relative;
   overflow: hidden;
 }
-
 .ripple::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.12) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
-
 .ripple:active::after {
   opacity: 1;
 }
@@ -359,7 +257,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .progress-bar::after {
   content: '';
   position: absolute;
@@ -367,10 +264,9 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
   animation: progressShine 2s ease-in-out infinite;
 }
-
 @keyframes progressShine {
   0% { left: -100%; }
   100% { left: 200%; }
@@ -383,7 +279,6 @@
   transform: translateY(8px);
   animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
 .stagger-children > *:nth-child(2) { animation-delay: 60ms; }
 .stagger-children > *:nth-child(3) { animation-delay: 120ms; }
@@ -475,6 +370,40 @@
 @keyframes confettiFall3 {
   0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateY(460px) translateX(40px) rotate(-480deg); opacity: 0; }
+}
+
+/* ── Sparkle Effect ────────────────────────────────── */
+
+@keyframes sparkle0 {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) translate(30px, -40px); opacity: 0; }
+}
+@keyframes sparkle1 {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) translate(-25px, -35px); opacity: 0; }
+}
+@keyframes sparkle2 {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) translate(40px, 20px); opacity: 0; }
+}
+@keyframes sparkle3 {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) translate(-35px, 25px); opacity: 0; }
+}
+
+/* ── Timer Ring Pulse ──────────────────────────────── */
+
+@keyframes ringPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--ring-glow-color, rgba(90,175,94,0.3))); }
+  50% { filter: drop-shadow(0 0 20px var(--ring-glow-color, rgba(90,175,94,0.5))); }
+}
+
+/* ── Pet Bounce ────────────────────────────────────── */
+
+@keyframes petBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-2deg); }
+  75% { transform: translateY(-3px) rotate(2deg); }
 }
 
 /* ── Reduced Motion ────────────────────────────────── */
