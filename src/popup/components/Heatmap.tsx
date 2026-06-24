@@ -127,7 +127,7 @@ export function Heatmap({ dailyStats }: HeatmapProps) {
 
       {/* Legend */}
       <div className="flex items-center gap-1 mt-2 justify-end">
-        <span className="text-[9px] text-gray-600">Less</span>
+        <span className="text-[9px] text-cream-400/20">Less</span>
         {[0, 15, 30, 60, 90].map((m) => (
           <div
             key={m}
@@ -135,7 +135,7 @@ export function Heatmap({ dailyStats }: HeatmapProps) {
             style={{ background: getColor(m) }}
           />
         ))}
-        <span className="text-[9px] text-gray-600">More</span>
+        <span className="text-[9px] text-cream-400/20">More</span>
       </div>
     </div>
   );

@@ -89,7 +89,7 @@ export function Controls() {
         onClick={handleReset}
         className="w-11 h-11 rounded-full flex items-center justify-center
                    bg-cream-100/5 hover:bg-cream-100/10 active:bg-cream-100/15
-                   text-gray-400 hover:text-cream-200
+                   text-cream-400/30 hover:text-cream-200
                    transition-all duration-300 ease-out
                    active:scale-90 hover:scale-105
                    focus-visible:ring-2 focus-visible:ring-moss-500/50"
@@ -169,7 +169,7 @@ export function Controls() {
         onClick={handleSkip}
         className="w-11 h-11 rounded-full flex items-center justify-center
                    bg-cream-100/5 hover:bg-cream-100/10 active:bg-cream-100/15
-                   text-gray-400 hover:text-cream-200
+                   text-cream-400/30 hover:text-cream-200
                    transition-all duration-300 ease-out
                    active:scale-90 hover:scale-105
                    focus-visible:ring-2 focus-visible:ring-moss-500/50"

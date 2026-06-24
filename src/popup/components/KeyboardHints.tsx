@@ -88,7 +88,7 @@ export function KeyboardHints() {
                 transition: `all 0.3s ease ${i * 40}ms`,
               }}
             >
-              <span className="text-xs text-gray-400">{s.icon} {s.label}</span>
+              <span className="text-xs text-cream-400/40">{s.icon} {s.label}</span>
               <kbd
                 className="px-2 py-0.5 rounded-lg text-[10px] font-mono"
                 style={{
@@ -102,7 +102,7 @@ export function KeyboardHints() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-gray-600 text-center mt-3">
+        <p className="text-[10px] text-cream-400/20 text-center mt-3">
           Press <kbd className="px-1 py-0.5 rounded bg-surface-3 text-gray-400">?</kbd> or <kbd className="px-1 py-0.5 rounded bg-surface-3 text-gray-400">Esc</kbd> to close
         </p>
       </div>

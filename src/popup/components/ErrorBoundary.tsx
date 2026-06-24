@@ -47,13 +47,13 @@ export class ErrorBoundary extends Component<Props, State> {
             😵
           </div>
           <h2
-            className="text-lg font-semibold text-white mb-2"
+            className="font-display text-lg font-bold text-cream-100 mb-2"
             style={{ animation: 'onboardingSlideIn 0.4s ease 0.1s both' }}
           >
             Something went wrong
           </h2>
           <p
-            className="text-xs text-gray-400 mb-4 max-w-[260px]"
+            className="text-xs text-cream-400/50 mb-4 max-w-[260px] leading-relaxed"
             style={{ animation: 'onboardingSlideIn 0.4s ease 0.2s both' }}
           >
             The app hit an unexpected error. This is likely a bug — sorry about that.
@@ -63,10 +63,10 @@ export class ErrorBoundary extends Component<Props, State> {
               className="w-full mb-4"
               style={{ animation: 'onboardingSlideIn 0.4s ease 0.3s both' }}
             >
-              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-300 transition-colors">
+              <summary className="text-xs text-cream-400/30 cursor-pointer hover:text-cream-300/50 transition-colors">
                 Technical details
               </summary>
-              <pre className="mt-2 text-[10px] text-red-400 bg-surface-2 rounded-lg p-2 overflow-x-auto text-left">
+              <pre className="mt-2 text-[10px] text-red-400/80 bg-surface-2 rounded-lg p-2 overflow-x-auto text-left">
                 {this.state.error.message}
               </pre>
             </details>

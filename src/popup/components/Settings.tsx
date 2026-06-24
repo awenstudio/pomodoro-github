@@ -178,7 +178,7 @@ export function Settings() {
       <div className="glass rounded-2xl p-3 border border-white/5" style={stagger(3)}>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-cream-200 font-display font-bold">☁️ Cloud Sync</span>
-          <span className="text-[9px] text-gray-600 bg-surface-3 px-1.5 py-0.5 rounded-full">
+          <span className="text-[9px] text-cream-400/20 bg-surface-3 px-1.5 py-0.5 rounded-full">
             optional
           </span>
         </div>
@@ -194,7 +194,7 @@ export function Settings() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-white font-medium truncate">{user.name}</p>
-                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                <p className="text-[10px] text-cream-400/30 truncate">{user.email}</p>
               </div>
               <span className="text-green-400 text-[10px]">● connected</span>
             </div>
@@ -207,14 +207,14 @@ export function Settings() {
               </button>
             </div>
             {syncInfo.status === 'success' && syncInfo.lastSyncAt && (
-              <p className="text-[10px] text-gray-600">
+              <p className="text-[10px] text-cream-400/20">
                 Last synced: {new Date(syncInfo.lastSyncAt).toLocaleString()}
               </p>
             )}
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            <p className="text-[11px] text-gray-500 leading-relaxed">
+            <p className="text-[11px] text-cream-400/30 leading-relaxed">
               Sync your data across devices. Stored privately in your Google Drive — only you can access it.
             </p>
             <button
@@ -226,7 +226,7 @@ export function Settings() {
                          transition-colors duration-150 disabled:opacity-50"
             >
               {loginLoading ? (
-                <span className="text-gray-500">Signing in...</span>
+                <span className="text-cream-400/30">Signing in...</span>
               ) : (
                 <>
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
@@ -304,7 +304,7 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-300">{label}</span>
+      <span className="text-xs text-cream-300/50">{label}</span>
       <button
         onClick={() => onChange(!checked)}
         className="relative w-9 h-5 rounded-full transition-colors duration-300"
