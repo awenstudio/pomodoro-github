@@ -1,8 +1,10 @@
 /* ─────────────────────────────────────────────────────
  *  App — Pawodoro root. Warm, cozy, pet-themed.
+ *  v2: Smooth tab transitions, page transitions,
+ *  entrance animations.
  * ───────────────────────────────────────────────────── */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Timer } from './components/Timer';
 import { Stats } from './components/Stats';
 import { Settings } from './components/Settings';
@@ -25,13 +27,29 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('timer');
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const [exiting, setExiting] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const [navVisible, setNavVisible] = useState(false);
   const timer = useTimer();
+  const prevTab = useRef(activeTab);
 
   useEffect(() => {
     chrome.storage.local.get(STORAGE_KEY_ONBOARDED, (result) => {
       setOnboarded(!!result[STORAGE_KEY_ONBOARDED]);
     });
   }, []);
+
+  // Entrance animation
+  useEffect(() => {
+    if (onboarded) {
+      const t1 = setTimeout(() => setHeaderVisible(true), 100);
+      const t2 = setTimeout(() => setNavVisible(true), 200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [onboarded]);
 
   const handleOnboardingComplete = useCallback(async () => {
     await chrome.storage.local.set({ [STORAGE_KEY_ONBOARDED]: true });
@@ -43,13 +61,18 @@ export default function App() {
     const oldIndex = TABS.findIndex((t) => t.id === activeTab);
     const newIndex = TABS.findIndex((t) => t.id === newTab);
     setTabDirection(newIndex > oldIndex ? 'right' : 'left');
-    setActiveTab(newTab);
+    prevTab.current = activeTab;
+    setExiting(true);
+    setTimeout(() => {
+      setActiveTab(newTab);
+      setExiting(false);
+    }, 150);
   }, [activeTab]);
 
   if (onboarded === null) {
     return (
       <div className="flex items-center justify-center min-h-[520px]">
-        <div className="text-3xl animate-bounce-gentle">🐾</div>
+        <div className="text-3xl" style={{ animation: 'petBreathe 2s ease-in-out infinite' }}>🐾</div>
       </div>
     );
   }
@@ -68,12 +91,17 @@ export default function App() {
     <ErrorBoundary>
       <div className="flex flex-col min-h-[520px] overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 pt-4 pb-2">
+        <header
+          className="flex items-center justify-between px-4 pt-4 pb-2"
+          style={{
+            opacity: headerVisible ? 1 : 0,
+            transform: headerVisible ? 'translateY(0)' : 'translateY(-8px)',
+            transition: 'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
           <div className="flex items-center gap-2">
-            <span className="text-lg animate-bounce-gentle">🐾</span>
-            <h1 className="text-sm font-semibold text-cream-100 tracking-tight">
-              Pawodoro
-            </h1>
+            <span className="text-lg" style={{ animation: 'petBreathe 3s ease-in-out infinite' }}>🐾</span>
+            <h1 className="text-sm font-semibold text-cream-100 tracking-tight">Pawodoro</h1>
           </div>
           {isLoggedIn && (
             <button
@@ -88,7 +116,7 @@ export default function App() {
               }
             >
               <svg
-                className={`w-4 h-4 ${
+                className={`w-4 h-4 transition-colors duration-300 ${
                   timer.syncState.status === 'syncing'
                     ? 'animate-spin text-moss-400'
                     : timer.syncState.status === 'success'
@@ -113,8 +141,13 @@ export default function App() {
         {/* Tab content */}
         <main className="flex-1 px-4 pb-2 relative overflow-hidden">
           <div
-            key={activeTab}
-            className={`animate-tab-${tabDirection} h-full`}
+            style={{
+              opacity: exiting ? 0 : 1,
+              transform: exiting
+                ? tabDirection === 'right' ? 'translateX(-16px)' : 'translateX(16px)'
+                : 'translateX(0)',
+              transition: 'opacity 0.2s ease, transform 0.2s ease',
+            }}
           >
             <ErrorBoundary>
               {activeTab === 'timer' && (
@@ -137,12 +170,22 @@ export default function App() {
         </main>
 
         {/* Tab bar */}
-        <nav className="relative px-4 py-3 border-t border-cream-100/5">
+        <nav
+          className="relative px-4 py-3 border-t border-cream-100/5"
+          style={{
+            opacity: navVisible ? 1 : 0,
+            transform: navVisible ? 'translateY(0)' : 'translateY(8px)',
+            transition: 'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          {/* Active tab indicator */}
           <div
-            className="absolute top-0 h-[2px] bg-moss-500 rounded-full transition-all duration-300 ease-out"
+            className="absolute top-0 h-[2px] rounded-full will-change-[width]"
             style={{
               left: `${(TABS.findIndex((t) => t.id === activeTab) / TABS.length) * 100}%`,
               width: `${100 / TABS.length}%`,
+              background: 'linear-gradient(90deg, #5AAF5E, #7BC47A)',
+              transition: 'left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           />
           <div className="flex items-center justify-center gap-1">
@@ -152,14 +195,17 @@ export default function App() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs
-                    transition-all duration-200 ease-out
-                    ${isActive
-                      ? 'text-cream-100 scale-105'
-                      : 'text-gray-500 hover:text-gray-300 active:scale-95'
-                    }`}
+                  className="relative flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs
+                             transition-all duration-300 ease-out select-none"
+                  style={{
+                    color: isActive ? '#FFF8E6' : 'rgba(255,248,230,0.35)',
+                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                  }}
                 >
-                  <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
+                  <span
+                    className="transition-transform duration-300"
+                    style={{ transform: isActive ? 'scale(1.15) rotate(-5deg)' : 'scale(1) rotate(0deg)' }}
+                  >
                     {tab.icon}
                   </span>
                   <span className="font-medium">{tab.label}</span>
