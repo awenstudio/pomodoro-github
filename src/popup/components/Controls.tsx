@@ -1,32 +1,43 @@
 /* ─────────────────────────────────────────────────────
  *  Controls — Premium pawodoro play/pause/skip/reset.
  *  Glass morphism, spring animations, haptic feel.
+ *  v2: Enhanced micro-interactions, ripple effects,
+ *  keyboard shortcuts, gesture support.
  * ───────────────────────────────────────────────────── */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTimer } from '../hooks/useTimer';
 
 export function Controls() {
   const { isRunning, isPaused, start, pause, resume, skip, reset } = useTimer();
-  const [ripple, setRipple] = useState(false);
+  const [playRipple, setPlayRipple] = useState(false);
+  const [skipRotation, setSkipRotation] = useState(0);
+  const [resetSpin, setResetSpin] = useState(0);
 
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          if (isRunning) pause();
-          else if (isPaused) resume();
-          else start();
+          handlePlayPause();
           break;
         case 'KeyS':
           if (e.metaKey || e.ctrlKey) return;
-          skip();
+          handleSkip();
           break;
         case 'KeyR':
           if (e.metaKey || e.ctrlKey) return;
-          reset();
+          handleReset();
+          break;
+        case 'ArrowRight':
+          if (e.metaKey || e.ctrlKey) return;
+          handleSkip();
+          break;
+        case 'ArrowLeft':
+          if (e.metaKey || e.ctrlKey) return;
+          handleReset();
           break;
       }
     };
@@ -34,28 +45,50 @@ export function Controls() {
     return () => window.removeEventListener('keydown', handler);
   }, [isRunning, isPaused, start, pause, resume, skip, reset]);
 
-  const handlePlayPause = () => {
-    setRipple(true);
-    setTimeout(() => setRipple(false), 500);
+  const handlePlayPause = useCallback(() => {
+    setPlayRipple(true);
+    setTimeout(() => setPlayRipple(false), 500);
     if (isRunning) pause();
     else if (isPaused) resume();
     else start();
-  };
+  }, [isRunning, isPaused, start, pause, resume]);
+
+  const handleSkip = useCallback(() => {
+    setSkipRotation((prev) => prev + 180);
+    skip();
+  }, [skip]);
+
+  const handleReset = useCallback(() => {
+    setResetSpin((prev) => prev + 360);
+    reset();
+  }, [reset]);
 
   return (
     <div className="flex items-center gap-4">
       {/* Reset */}
       <button
-        onClick={reset}
+        onClick={handleReset}
         className="w-11 h-11 rounded-full flex items-center justify-center
                    bg-cream-100/5 hover:bg-cream-100/10 active:bg-cream-100/15
                    text-gray-400 hover:text-cream-200
-                   transition-all duration-200 ease-out
-                   active:scale-90 hover:scale-105"
-        title="Reset (R)"
+                   transition-all duration-300 ease-out
+                   active:scale-90 hover:scale-105
+                   focus-visible:ring-2 focus-visible:ring-moss-500/50"
+        title="Reset (R / ←)"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <svg
+          className="w-4 h-4 transition-transform duration-500"
+          style={{ transform: `rotate(${resetSpin}deg)` }}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
         </svg>
       </button>
 
@@ -64,7 +97,8 @@ export function Controls() {
         onClick={handlePlayPause}
         className="w-16 h-16 rounded-full flex items-center justify-center relative overflow-hidden
                    transition-all duration-300 ease-out
-                   active:scale-95 hover:scale-105"
+                   active:scale-95 hover:scale-105
+                   focus-visible:ring-2 focus-visible:ring-moss-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
         style={{
           background: isRunning
             ? 'linear-gradient(135deg, rgba(90,175,94,0.3), rgba(90,175,94,0.15))'
@@ -75,7 +109,8 @@ export function Controls() {
         }}
         title="Start/Pause (Space)"
       >
-        {ripple && (
+        {/* Ripple effect */}
+        {playRipple && (
           <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span
               className="w-24 h-24 rounded-full animate-ping"
@@ -83,6 +118,8 @@ export function Controls() {
             />
           </span>
         )}
+
+        {/* Animated icon */}
         <span className="relative z-10 text-white">
           {isRunning ? (
             <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -95,19 +132,38 @@ export function Controls() {
             </svg>
           )}
         </span>
+
+        {/* Pulsing ring when running */}
+        {isRunning && (
+          <span
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              border: '2px solid rgba(90,175,94,0.3)',
+              animation: 'controlPulseRing 2s ease-in-out infinite',
+            }}
+          />
+        )}
       </button>
 
       {/* Skip */}
       <button
-        onClick={skip}
+        onClick={handleSkip}
         className="w-11 h-11 rounded-full flex items-center justify-center
                    bg-cream-100/5 hover:bg-cream-100/10 active:bg-cream-100/15
                    text-gray-400 hover:text-cream-200
-                   transition-all duration-200 ease-out
-                   active:scale-90 hover:scale-105"
-        title="Skip (S)"
+                   transition-all duration-300 ease-out
+                   active:scale-90 hover:scale-105
+                   focus-visible:ring-2 focus-visible:ring-moss-500/50"
+        title="Skip (S / →)"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg
+          className="w-4 h-4 transition-transform duration-500"
+          style={{ transform: `translateX(${skipRotation % 360 === 0 ? 0 : (skipRotation % 180 === 0 ? 0 : 2)}px)` }}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
           <polygon points="5,4 15,12 5,20" fill="currentColor" />
           <line x1="19" y1="5" x2="19" y2="19" />
         </svg>

@@ -15,7 +15,6 @@
     overflow-y: auto;
     overflow-x: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    /* Warm cream-tinted background */
     background: #1A1814;
   }
 
@@ -38,11 +37,6 @@
 }
 
 @layer components {
-  /* ── Timer Ring ── */
-  .timer-ring {
-    transition: stroke-dashoffset 1s linear;
-  }
-
   /* ── Glass Card (warm-tinted) ── */
   .glass {
     background: rgba(255, 248, 230, 0.04);
@@ -54,7 +48,7 @@
     background: rgba(255, 248, 230, 0.07);
   }
 
-  /* ── Buttons (moss green primary, warm tones) ── */
+  /* ── Buttons ── */
   .btn-primary {
     @apply bg-moss-600 hover:bg-moss-500 active:bg-moss-700
            text-white font-medium rounded-2xl
@@ -81,15 +75,6 @@
            active:scale-[0.96];
   }
 
-  /* ── Tabs ── */
-  .tab-active {
-    @apply bg-cream-100/10 text-cream-100 font-semibold;
-  }
-
-  .tab-inactive {
-    @apply text-gray-500 hover:text-gray-300;
-  }
-
   /* ── Inputs ── */
   .setting-input {
     @apply w-16 px-2 py-1 text-center text-sm
@@ -99,34 +84,28 @@
   }
 }
 
-/* ── Tab Slide Animations ─────────────────────────── */
+/* ── GPU-Accelerated Utility Classes ──────────────── */
 
-@keyframes tab-slide-right {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
+.will-change-transform {
+  will-change: transform;
 }
 
-@keyframes tab-slide-left {
-  from { opacity: 0; transform: translateX(-16px); }
-  to { opacity: 1; transform: translateX(0); }
+.will-change-[width] {
+  will-change: width;
 }
 
-.animate-tab-right {
-  animation: tab-slide-right 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.animate-tab-left {
-  animation: tab-slide-left 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+.will-change-[opacity] {
+  will-change: opacity;
 }
 
 /* ── Utility Animations ───────────────────────────── */
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.2s ease-out;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .animate-float {
@@ -148,14 +127,109 @@
   animation: shimmer 2.5s linear infinite;
 }
 
+/* ── Spring Animations ────────────────────────────── */
+
+.animate-spring-in {
+  animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-bounce-subtle {
+  animation: bounceSubtle 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-pulse-soft {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+
+/* ── Keyframes ────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes springIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  50% {
+    transform: scale(1.05) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bounceSubtle {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  60% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(90, 175, 94, 0.15); }
-  50% { box-shadow: 0 0 24px rgba(90, 175, 94, 0.3); }
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(90, 175, 94, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(90, 175, 94, 0.3);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* ── Hover Effects ─────────────────────────────────── */
@@ -180,7 +254,6 @@
     transform: scale(0.95);
   }
 
-  /* Warm glow for active elements */
   .warm-glow {
     box-shadow: 0 0 20px rgba(255, 159, 74, 0.15);
   }
@@ -235,4 +308,126 @@
 .stat-pill:hover {
   background: rgba(255, 248, 230, 0.07);
   border-color: rgba(255, 248, 230, 0.1);
+}
+
+/* ── Focus Mode Indicator ─────────────────────────── */
+
+.focus-indicator {
+  position: relative;
+}
+
+.focus-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--accent-color, #5AAF5E);
+  border-radius: 1px;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.focus-indicator.active::after {
+  width: 80%;
+}
+
+/* ── Ripple Effect ─────────────────────────────────── */
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ripple:active::after {
+  opacity: 1;
+}
+
+/* ── Progress Bar Animation ────────────────────────── */
+
+.progress-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ── Stagger Animation Helper ──────────────────────── */
+
+.stagger-children > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
+
+/* ── Theme Transitions ─────────────────────────────── */
+
+.theme-transition {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* ── Keyboard Focus Styles ─────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid rgba(90, 175, 94, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Control Pulse Ring ─────────────────────────────── */
+
+@keyframes controlPulseRing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+
+/* ── Reduced Motion ────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
