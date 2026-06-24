@@ -408,6 +408,49 @@
 
 /* ── Reduced Motion ────────────────────────────────── */
 
+/* ── Pet Interaction Animations ──────────────────────── */
+
+@keyframes pet-eat {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  15% { transform: scale(1.05) rotate(-3deg); }
+  30% { transform: scale(0.97) rotate(2deg); }
+  45% { transform: scale(1.03) rotate(-2deg); }
+  60% { transform: scale(0.98) rotate(1deg); }
+  75% { transform: scale(1.02) rotate(-1deg); }
+}
+
+@keyframes pet-play {
+  0%, 100% { transform: scale(1) translateX(0) rotate(0deg); }
+  20% { transform: scale(1.05) translateX(-8px) rotate(-5deg); }
+  40% { transform: scale(0.95) translateX(8px) rotate(5deg); }
+  60% { transform: scale(1.08) translateX(-4px) rotate(-3deg); }
+  80% { transform: scale(0.97) translateX(4px) rotate(2deg); }
+}
+
+@keyframes pet-love {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.08); }
+  50% { transform: scale(1.03); }
+  75% { transform: scale(1.06); }
+}
+
+@keyframes pet-heart-float {
+  0% { transform: translateY(0) scale(0.5); opacity: 1; }
+  100% { transform: translateY(-30px) scale(1.2); opacity: 0; }
+}
+
+.animate-pet-eat {
+  animation: pet-eat 0.6s ease-in-out 3;
+}
+
+.animate-pet-play {
+  animation: pet-play 0.5s ease-in-out 4;
+}
+
+.animate-pet-love {
+  animation: pet-love 0.4s ease-in-out 3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

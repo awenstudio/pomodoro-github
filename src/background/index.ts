@@ -17,6 +17,7 @@ import type {
 } from '@/types';
 import type { Pet, PetSpecies, PetPersonality } from '@/lib/pet-system';
 import { STAGE_XP_REQUIREMENTS } from '@/lib/pet-system';
+import { executeInteraction, applyStatDecay, applyIdleDecay, type CooldownState } from '@/lib/pet-interaction';
 import { createInitialState, timerReducer } from '@/lib/timer-engine';
 import {
   loadTimerState,
@@ -194,17 +195,16 @@ async function handleTick(): Promise<void> {
               }
             }
 
+            const decayedPet = applyStatDecay(pet, durationMin);
             await savePet({
-              ...pet,
+              ...decayedPet,
               xp: newPetXP,
               level: Math.floor(newPetXP / 100) + 1,
               stage: newStage,
-              food: pet.food + foodGain,
-              hunger: Math.max(0, pet.hunger - 10), // gets hungry during focus
-              mood: Math.min(100, pet.mood + 3),     // happy when you focus
-              affinity: Math.min(10000, pet.affinity + xpGain),
-              totalFocusMinutes: pet.totalFocusMinutes + durationMin,
-              totalPomodoros: pet.totalPomodoros + 1,
+              food: decayedPet.food + foodGain,
+              affinity: Math.min(10000, decayedPet.affinity + xpGain),
+              totalFocusMinutes: decayedPet.totalFocusMinutes + durationMin,
+              totalPomodoros: decayedPet.totalPomodoros + 1,
             });
           }
         }
@@ -279,7 +279,17 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     case 'GET_STATE': {
       const data = await loadAllData();
       const progress = await loadProgress();
-      const pet = await loadPet();
+      let pet = await loadPet();
+
+      // Apply idle decay when loading state
+      if (pet) {
+        const decayed = applyIdleDecay(pet);
+        if (decayed.mood !== pet.mood || decayed.hunger !== pet.hunger) {
+          await savePet(decayed);
+          pet = decayed;
+        }
+      }
+
       return {
         success: true,
         data: {
@@ -491,46 +501,26 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       return { success: true, data: newPet };
     }
 
-    case 'FEED_PET': {
-      const pet = await loadPet();
-      if (!pet || pet.food <= 0) return { success: false, error: 'No food' };
-      const fedPet: Pet = {
-        ...pet,
-        hunger: Math.min(100, pet.hunger + 20),
-        mood: Math.min(100, pet.mood + 5),
-        affinity: Math.min(10000, pet.affinity + 10),
-        food: pet.food - 1,
-        lastFedAt: new Date().toISOString(),
-      };
-      await savePet(fedPet);
-      return { success: true, data: fedPet };
-    }
-
-    case 'PLAY_WITH_PET': {
-      const pet = await loadPet();
-      if (!pet) return { success: false, error: 'No pet' };
-      const playedPet: Pet = {
-        ...pet,
-        mood: Math.min(100, pet.mood + 15),
-        hunger: Math.max(0, pet.hunger - 5),
-        affinity: Math.min(10000, pet.affinity + 20),
-        lastInteractedAt: new Date().toISOString(),
-      };
-      await savePet(playedPet);
-      return { success: true, data: playedPet };
-    }
-
+    case 'FEED_PET':
+    case 'PLAY_WITH_PET':
     case 'PET_PET': {
       const pet = await loadPet();
       if (!pet) return { success: false, error: 'No pet' };
-      const pettedPet: Pet = {
-        ...pet,
-        mood: Math.min(100, pet.mood + 8),
-        affinity: Math.min(10000, pet.affinity + 15),
-        lastInteractedAt: new Date().toISOString(),
-      };
-      await savePet(pettedPet);
-      return { success: true, data: pettedPet };
+      const interactionType = msg.type === 'FEED_PET' ? 'feed' : msg.type === 'PLAY_WITH_PET' ? 'play' : 'pet';
+
+      // Load cooldowns from storage
+      const stored = await chrome.storage.local.get('pomodoro_pet_cooldowns');
+      const cooldowns: CooldownState = stored.pomodoro_pet_cooldowns || { feed: 0, play: 0, pet: 0 };
+
+      const result = executeInteraction(pet, interactionType, cooldowns);
+      if (!result.success) return { success: false, error: result.error };
+
+      // Update cooldowns
+      const newCooldowns = { ...cooldowns, [interactionType]: Date.now() + result.cooldownMs };
+      await chrome.storage.local.set({ pomodoro_pet_cooldowns: newCooldowns });
+
+      await savePet(result.pet);
+      return { success: true, data: { pet: result.pet, reaction: result.reaction, statChanges: result.statChanges, cooldownMs: result.cooldownMs } };
     }
 
     case 'CLEAR_DATA': {

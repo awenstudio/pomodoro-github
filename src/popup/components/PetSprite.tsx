@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export type AnimationType = 'idle' | 'walk' | 'hatch' | 'focus' | 'rest' | 'relax' | 'static';
+export type AnimationType = 'idle' | 'walk' | 'hatch' | 'focus' | 'rest' | 'relax' | 'static' | 'eating' | 'playing' | 'petting';
 
 interface PetSpriteProps {
   species: string;
@@ -146,6 +146,9 @@ const ANIMATION_CLASSES: Partial<Record<AnimationType, string>> = {
   rest: 'animate-fade-in',
   relax: 'animate-float',
   hatch: 'animate-scale-in',
+  eating: 'animate-pet-eat',
+  playing: 'animate-pet-play',
+  petting: 'animate-pet-love',
   static: '',
 };
 

@@ -14,6 +14,8 @@ import { playPet, playFeed, playLevelUp, playComplete } from '@/lib/sounds';
 import type { SessionType } from '@/types';
 import { Confetti } from './Confetti';
 import { CompletionRewardCard } from './CompletionRewardCard';
+import type { Pet } from '@/lib/pet-system';
+import type { AnimationType } from './PetSprite';
 
 /* ── Constants ─────────────────────────────────────── */
 
@@ -282,7 +284,16 @@ export function Timer() {
   }, [timerProgress]);
 
   // Pet animation based on mode + state
-  const getAnimation = useCallback(() => {
+  const [petAnimState, setPetAnimState] = useState<AnimationType>('idle');
+  const [petReaction, setPetReaction] = useState<string | null>(null);
+  const [statFloat, setStatFloat] = useState<{ mood: number; hunger: number; affinity: number } | null>(null);
+  const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const getAnimation = useCallback((): AnimationType => {
+    // If pet is in an interaction animation, use that
+    if (petAnimState === 'eating' || petAnimState === 'playing' || petAnimState === 'petting') {
+      return petAnimState;
+    }
     if (!isRunning && !isPaused) return 'idle';
     switch (currentSessionType) {
       case 'work': return 'focus';
@@ -290,7 +301,43 @@ export function Timer() {
       case 'longBreak': return 'relax';
       default: return 'idle';
     }
-  }, [isRunning, isPaused, currentSessionType]);
+  }, [isRunning, isPaused, currentSessionType, petAnimState]);
+
+  // Handle pet interaction with visual feedback
+  const handlePetInteraction = useCallback(async (type: 'feed' | 'play' | 'pet') => {
+    const action = type === 'feed' ? feedPet : type === 'play' ? playWithPet : petPet;
+    if (type === 'feed') playFeed(); else playPet();
+
+    // Set animation state
+    const animState: AnimationType = type === 'feed' ? 'eating' : type === 'play' ? 'playing' : 'petting';
+    setPetAnimState(animState);
+
+    const result = await action();
+
+    if (result?.success && result.data) {
+      const data = result.data as { pet: Pet; reaction: string; statChanges: { mood: number; hunger: number; affinity: number }; cooldownMs: number };
+      setPetReaction(data.reaction);
+      setStatFloat(data.statChanges);
+
+      // Clear reaction after animation
+      if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
+      interactionTimeoutRef.current = setTimeout(() => {
+        setPetReaction(null);
+        setStatFloat(null);
+        setPetAnimState('idle');
+      }, 2500);
+    } else {
+      // Error — show brief feedback
+      if (result?.data) {
+        const data = result.data as { reaction?: string };
+        if (data.reaction) setPetReaction(data.reaction);
+      }
+      setTimeout(() => {
+        setPetReaction(null);
+        setPetAnimState('idle');
+      }, 1500);
+    }
+  }, [feedPet, playWithPet, petPet]);
 
   // Swipe gesture for tab switching
   const touchStartX = useRef(0);
@@ -672,23 +719,61 @@ export function Timer() {
               icon="🍖"
               label="Feed"
               count={pet.food}
-              onClick={() => { playFeed(); feedPet(); }}
+              onClick={() => handlePetInteraction('feed')}
               disabled={pet.food <= 0}
               color="#FF9E4A"
             />
             <PetActionButton
               icon="⚽"
               label="Play"
-              onClick={() => { playPet(); playWithPet(); }}
+              onClick={() => handlePetInteraction('play')}
               color="#7BA8D1"
             />
             <PetActionButton
               icon="🤲"
               label="Pet"
-              onClick={() => { playPet(); petPet(); }}
+              onClick={() => handlePetInteraction('pet')}
               color="#FF8A8A"
             />
           </div>
+
+          {/* Pet reaction bubble */}
+          {petReaction && (
+            <div
+              className="mt-2.5 text-center relative z-10"
+              style={{ animation: 'rewardSlideUp 0.2s ease-out' }}
+            >
+              <div
+                className="inline-block px-3 py-1.5 rounded-xl text-[11px] font-display text-cream-200"
+                style={{
+                  background: 'rgba(255,248,230,0.06)',
+                  border: '1px solid rgba(255,248,230,0.08)',
+                }}
+              >
+                {petReaction}
+              </div>
+              {/* Floating stat changes */}
+              {statFloat && (
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  {statFloat.mood !== 0 && (
+                    <span className="text-[10px] font-mono" style={{ color: statFloat.mood > 0 ? '#6FA85C' : '#E86868', animation: 'rewardSlideUp 0.25s ease 0.1s both' }}>
+                      {statFloat.mood > 0 ? '+' : ''}{statFloat.mood} mood
+                    </span>
+                  )}
+                  {statFloat.hunger !== 0 && (
+                    <span className="text-[10px] font-mono" style={{ color: statFloat.hunger > 0 ? '#E89B52' : '#6FA85C', animation: 'rewardSlideUp 0.25s ease 0.15s both' }}>
+                      {statFloat.hunger > 0 ? '+' : ''}{statFloat.hunger} hunger
+                    </span>
+                  )}
+                  {statFloat.affinity > 0 && (
+                    <span className="text-[10px] font-mono" style={{ color: '#FF8A8A', animation: 'rewardSlideUp 0.25s ease 0.2s both' }}>
+                      +{statFloat.affinity} ❤️
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

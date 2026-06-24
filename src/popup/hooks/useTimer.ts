@@ -188,25 +188,28 @@ export function useTimer() {
   const feedPet = useCallback(async () => {
     const response = await sendMessage({ type: 'FEED_PET' });
     if (response.success && response.data) {
-      store.setPet(response.data as Pet);
+      const data = response.data as { pet: Pet; reaction: string; statChanges: { mood: number; hunger: number; affinity: number }; cooldownMs: number };
+      store.setPet(data.pet);
     }
-    return response.success;
+    return response;
   }, []);
 
   const playWithPet = useCallback(async () => {
     const response = await sendMessage({ type: 'PLAY_WITH_PET' });
     if (response.success && response.data) {
-      store.setPet(response.data as Pet);
+      const data = response.data as { pet: Pet; reaction: string; statChanges: { mood: number; hunger: number; affinity: number }; cooldownMs: number };
+      store.setPet(data.pet);
     }
-    return response.success;
+    return response;
   }, []);
 
   const petPet = useCallback(async () => {
     const response = await sendMessage({ type: 'PET_PET' });
     if (response.success && response.data) {
-      store.setPet(response.data as Pet);
+      const data = response.data as { pet: Pet; reaction: string; statChanges: { mood: number; hunger: number; affinity: number }; cooldownMs: number };
+      store.setPet(data.pet);
     }
-    return response.success;
+    return response;
   }, []);
 
   return {
