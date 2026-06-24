@@ -1,12 +1,10 @@
 /* ─────────────────────────────────────────────────────
  *  Settings — Timer config and optional Google sync.
- *
- *  Design: Timer settings are primary. Google login
- *  is at the bottom, clearly optional, with value
- *  proposition ("sync across devices").
+ *  v2: Auto-save, staggered entrance, animated toggles,
+ *  smooth transitions.
  * ───────────────────────────────────────────────────── */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTimer } from '../hooks/useTimer';
 import { signIn, signOut } from '@/lib/google-auth';
 
@@ -16,10 +14,27 @@ export function Settings() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const handleSave = useCallback(async () => {
-    await updateSettings(localSettings);
-  }, [localSettings, updateSettings]);
+  useEffect(() => {
+    const t = setTimeout(() => setEntered(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      await updateSettings(localSettings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    }, 800);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [localSettings]);
 
   const handleGoogleLogin = useCallback(async () => {
     setLoginLoading(true);
@@ -52,129 +67,115 @@ export function Settings() {
 
   const user = settings.googleUser;
 
+  const stagger = (i: number): React.CSSProperties => ({
+    opacity: entered ? 1 : 0,
+    transform: entered ? 'translateY(0)' : 'translateY(12px)',
+    transition: `opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${i * 60}ms, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${i * 60}ms`,
+  });
+
   return (
-    <div className="flex flex-col gap-4 animate-fade-in pb-2">
-      {/* Timer durations — primary settings */}
-      <Section title="Timer">
-        <SettingRow label="Focus (min)">
-          <input
-            type="number"
-            className="setting-input"
-            min={1}
-            max={120}
-            value={Math.round(localSettings.workDuration / 60)}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (isNaN(v) || v < 1) return;
-              setLocalSettings((s) => ({ ...s, workDuration: v * 60 }));
-            }}
-          />
-        </SettingRow>
-        <SettingRow label="Short Break (min)">
-          <input
-            type="number"
-            className="setting-input"
-            min={1}
-            max={30}
-            value={Math.round(localSettings.shortBreakDuration / 60)}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (isNaN(v) || v < 1) return;
-              setLocalSettings((s) => ({ ...s, shortBreakDuration: v * 60 }));
-            }}
-          />
-        </SettingRow>
-        <SettingRow label="Long Break (min)">
-          <input
-            type="number"
-            className="setting-input"
-            min={1}
-            max={60}
-            value={Math.round(localSettings.longBreakDuration / 60)}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (isNaN(v) || v < 1) return;
-              setLocalSettings((s) => ({ ...s, longBreakDuration: v * 60 }));
-            }}
-          />
-        </SettingRow>
-        <SettingRow label="Long Break After">
-          <input
-            type="number"
-            className="setting-input"
-            min={2}
-            max={10}
-            value={localSettings.longBreakInterval}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (isNaN(v) || v < 2) return;
-              setLocalSettings((s) => ({ ...s, longBreakInterval: v }));
-            }}
-          />
-        </SettingRow>
-        <SettingRow label="Daily Goal">
-          <input
-            type="number"
-            className="setting-input"
-            min={1}
-            max={20}
-            value={localSettings.dailyGoal}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (isNaN(v) || v < 1) return;
-              setLocalSettings((s) => ({ ...s, dailyGoal: v }));
-            }}
-          />
-        </SettingRow>
-      </Section>
+    <div className="flex flex-col gap-4 pb-2">
+      {/* Save indicator */}
+      {saved && (
+        <div
+          className="text-center text-[11px] text-moss-400 animate-fade-in"
+          style={{ animationDuration: '0.3s' }}
+        >
+          ✓ Saved
+        </div>
+      )}
+
+      {/* Timer durations */}
+      <div className="glass rounded-2xl p-3" style={stagger(0)}>
+        <h3 className="text-xs font-medium text-cream-300 mb-3">Timer</h3>
+        <div className="flex flex-col gap-2.5">
+          <SettingRow label="Focus (min)">
+            <NumberInput
+              min={1}
+              max={120}
+              value={Math.round(localSettings.workDuration / 60)}
+              onChange={(v) => setLocalSettings((s) => ({ ...s, workDuration: v * 60 }))}
+            />
+          </SettingRow>
+          <SettingRow label="Short Break (min)">
+            <NumberInput
+              min={1}
+              max={30}
+              value={Math.round(localSettings.shortBreakDuration / 60)}
+              onChange={(v) => setLocalSettings((s) => ({ ...s, shortBreakDuration: v * 60 }))}
+            />
+          </SettingRow>
+          <SettingRow label="Long Break (min)">
+            <NumberInput
+              min={1}
+              max={60}
+              value={Math.round(localSettings.longBreakDuration / 60)}
+              onChange={(v) => setLocalSettings((s) => ({ ...s, longBreakDuration: v * 60 }))}
+            />
+          </SettingRow>
+          <SettingRow label="Long Break After">
+            <NumberInput
+              min={2}
+              max={10}
+              value={localSettings.longBreakInterval}
+              onChange={(v) => setLocalSettings((s) => ({ ...s, longBreakInterval: v }))}
+            />
+          </SettingRow>
+          <SettingRow label="Daily Goal">
+            <NumberInput
+              min={1}
+              max={20}
+              value={localSettings.dailyGoal}
+              onChange={(v) => setLocalSettings((s) => ({ ...s, dailyGoal: v }))}
+            />
+          </SettingRow>
+        </div>
+      </div>
 
       {/* Behavior */}
-      <Section title="Behavior">
-        <ToggleRow
-          label="Auto-start Breaks"
-          checked={localSettings.autoStartBreaks}
-          onChange={(v) => setLocalSettings((s) => ({ ...s, autoStartBreaks: v }))}
-        />
-        <ToggleRow
-          label="Auto-start Focus"
-          checked={localSettings.autoStartWork}
-          onChange={(v) => setLocalSettings((s) => ({ ...s, autoStartWork: v }))}
-        />
-        <ToggleRow
-          label="Sound"
-          checked={localSettings.soundEnabled}
-          onChange={(v) => setLocalSettings((s) => ({ ...s, soundEnabled: v }))}
-        />
-        <ToggleRow
-          label="Notifications"
-          checked={localSettings.notificationEnabled}
-          onChange={(v) =>
-            setLocalSettings((s) => ({ ...s, notificationEnabled: v }))
-          }
-        />
-      </Section>
+      <div className="glass rounded-2xl p-3" style={stagger(1)}>
+        <h3 className="text-xs font-medium text-cream-300 mb-3">Behavior</h3>
+        <div className="flex flex-col gap-2.5">
+          <ToggleRow
+            label="Auto-start Breaks"
+            checked={localSettings.autoStartBreaks}
+            onChange={(v) => setLocalSettings((s) => ({ ...s, autoStartBreaks: v }))}
+          />
+          <ToggleRow
+            label="Auto-start Focus"
+            checked={localSettings.autoStartWork}
+            onChange={(v) => setLocalSettings((s) => ({ ...s, autoStartWork: v }))}
+          />
+          <ToggleRow
+            label="Sound"
+            checked={localSettings.soundEnabled}
+            onChange={(v) => setLocalSettings((s) => ({ ...s, soundEnabled: v }))}
+          />
+          <ToggleRow
+            label="Notifications"
+            checked={localSettings.notificationEnabled}
+            onChange={(v) => setLocalSettings((s) => ({ ...s, notificationEnabled: v }))}
+          />
+        </div>
+      </div>
 
       {/* Data */}
-      <Section title="Data">
+      <div className="glass rounded-2xl p-3" style={stagger(2)}>
+        <h3 className="text-xs font-medium text-cream-300 mb-3">Data</h3>
         <button
           onClick={handleClearData}
-          className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
-            showClearConfirm
-              ? 'bg-red-600 text-white'
-              : 'btn-ghost text-red-400'
-          }`}
+          className="text-xs px-3 py-1.5 rounded-lg transition-all duration-200"
+          style={{
+            background: showClearConfirm ? 'rgba(239,68,68,0.8)' : 'transparent',
+            color: showClearConfirm ? 'white' : '#f87171',
+          }}
         >
           {showClearConfirm ? 'Click again to confirm' : 'Clear All Data'}
         </button>
-      </Section>
+      </div>
 
-      {/* Save button */}
-      <button onClick={handleSave} className="btn-primary w-full py-2.5 text-sm">
-        Save Settings
-      </button>
-
-      {/* Google Sync — OPTIONAL, bottom of page */}
-      <div className="glass rounded-2xl p-3 border border-white/5">
+      {/* Google Sync */}
+      <div className="glass rounded-2xl p-3 border border-white/5" style={stagger(3)}>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-cream-300 font-medium">☁️ Cloud Sync</span>
           <span className="text-[9px] text-gray-600 bg-surface-3 px-1.5 py-0.5 rounded-full">
@@ -250,21 +251,6 @@ export function Settings() {
 
 /* ── Sub-components ────────────────────────────────── */
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="glass rounded-2xl p-3">
-      <h3 className="text-xs font-medium text-cream-300 mb-3">{title}</h3>
-      <div className="flex flex-col gap-2.5">{children}</div>
-    </div>
-  );
-}
-
 function SettingRow({
   label,
   children,
@@ -277,6 +263,33 @@ function SettingRow({
       <span className="text-xs text-gray-300">{label}</span>
       {children}
     </div>
+  );
+}
+
+function NumberInput({
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <input
+      type="number"
+      className="setting-input"
+      min={min}
+      max={max}
+      value={value}
+      onChange={(e) => {
+        const v = parseInt(e.target.value, 10);
+        if (isNaN(v) || v < min) return;
+        onChange(v);
+      }}
+    />
   );
 }
 
@@ -294,14 +307,20 @@ function ToggleRow({
       <span className="text-xs text-gray-300">{label}</span>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${
-          checked ? 'bg-moss-600' : 'bg-surface-4'
-        }`}
+        className="relative w-9 h-5 rounded-full transition-colors duration-300"
+        style={{
+          background: checked
+            ? 'linear-gradient(135deg, #5AAF5E, #3D8B41)'
+            : 'rgba(255,248,230,0.08)',
+        }}
       >
         <div
-          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
-            checked ? 'translate-x-[18px]' : 'translate-x-0.5'
-          }`}
+          className="absolute top-0.5 w-4 h-4 bg-white rounded-full will-change-transform"
+          style={{
+            transform: checked ? 'translateX(18px)' : 'translateX(2px)',
+            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          }}
         />
       </button>
     </div>
