@@ -18,7 +18,8 @@ export type TimerEvent =
   | { type: 'SKIP' }
   | { type: 'RESET' }
   | { type: 'COMPLETE' }
-  | { type: 'SESSION_DONE' };
+  | { type: 'SESSION_DONE' }
+  | { type: 'SWITCH_SESSION'; sessionType: SessionType };
 
 /* ── Effects (side-effects the caller must handle) ── */
 
@@ -110,6 +111,21 @@ export function timerReducer(
       return {
         state: {
           ...state,
+          status: 'idle',
+          timeLeft: duration,
+          totalTime: duration,
+        },
+        effects,
+      };
+    }
+
+    case 'SWITCH_SESSION': {
+      if (state.status === 'running') return { state, effects }; // Don't switch while running
+      const duration = getDuration(event.sessionType, settings);
+      return {
+        state: {
+          ...state,
+          currentSessionType: event.sessionType,
           status: 'idle',
           timeLeft: duration,
           totalTime: duration,

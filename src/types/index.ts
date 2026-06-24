@@ -143,7 +143,8 @@ export type MessageType =
   | { type: 'UPDATE_SETTINGS'; settings: Partial<Settings> }
   | { type: 'SYNC_NOW' }
   | { type: 'GET_STATS' }
-  | { type: 'CLEAR_DATA' };
+  | { type: 'CLEAR_DATA' }
+  | { type: 'SWITCH_SESSION'; sessionType: SessionType };
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

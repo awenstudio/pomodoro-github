@@ -21,7 +21,7 @@ export function Timer() {
   const {
     displayTime, timerProgress, currentSessionType, pomodorosInCycle,
     settings, todayStats, streak, currentTask, isRunning, isPaused,
-    progress: playerProgress, pet, feedPet, playWithPet, petPet,
+    progress: playerProgress, pet, feedPet, playWithPet, petPet, switchSession,
   } = useTimer();
 
   const mode = MODE_CONFIG[currentSessionType];
@@ -73,9 +73,11 @@ export function Timer() {
         {(['work', 'shortBreak', 'longBreak'] as SessionType[]).map((type) => (
           <button
             key={type}
+            onClick={() => switchSession(type)}
+            disabled={isRunning}
             className={`px-3 py-1 rounded-xl text-xs transition-all duration-200 ${
               currentSessionType === type ? 'tab-active' : 'tab-inactive'
-            }`}
+            } ${isRunning ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
           >
             {MODE_CONFIG[type].label}
           </button>

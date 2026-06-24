@@ -12,7 +12,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useTimerStore } from '@/stores/timer-store';
-import type { MessageType, MessageResponse, TaskRef, PlayerProgress } from '@/types';
+import type { MessageType, MessageResponse, TaskRef, PlayerProgress, SessionType } from '@/types';
 import type { Pet } from '@/lib/pet-system';
 
 /* ── Message helper ────────────────────────────────── */
@@ -147,6 +147,13 @@ export function useTimer() {
     }
   }, []);
 
+  const switchSession = useCallback(async (sessionType: SessionType) => {
+    const response = await sendMessage({ type: 'SWITCH_SESSION', sessionType });
+    if (response.success && response.data) {
+      store.setTimerState(response.data as typeof store.timer);
+    }
+  }, []);
+
   const syncNow = useCallback(async () => {
     await sendMessage({ type: 'SYNC_NOW' });
     await syncState();
@@ -214,6 +221,7 @@ export function useTimer() {
     updateSettings,
     clearData,
     useForgiveness,
+    switchSession,
     createPet,
     feedPet,
     playWithPet,

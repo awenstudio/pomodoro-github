@@ -420,6 +420,18 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       return { success: true, data: currentState };
     }
 
+    case 'SWITCH_SESSION': {
+      // Only allow switching when idle
+      if (currentState.status !== 'idle') {
+        return { success: false, error: 'Cannot switch while timer is running' };
+      }
+      const result = timerReducer(currentState, { type: 'SWITCH_SESSION', sessionType: msg.sessionType }, cachedSettings);
+      currentState = result.state;
+      await saveTimerState(currentState);
+      updateBadge(currentState);
+      return { success: true, data: currentState };
+    }
+
     case 'UPDATE_SETTINGS': {
       const { saveSettings: save } = await import('@/lib/storage');
       await save(msg.settings);
