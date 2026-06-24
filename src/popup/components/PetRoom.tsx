@@ -13,6 +13,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { PetSprite } from './PetSprite';
 import type { AnimationType } from './PetSprite';
 import type { Pet } from '@/lib/pet-system';
+import {
+  IconDesk, IconBed, IconFoodBowl, IconToyBox, IconBookshelf,
+  IconPlant, IconWindow, IconRug,
+} from '@/lib/icons';
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -42,6 +46,17 @@ interface Furniture {
   interactable: boolean;
   description: string;
 }
+
+const FURNITURE_ICONS: Record<string, React.FC<{ size?: number; color?: string }>> = {
+  desk: IconDesk,
+  bed: IconBed,
+  food: IconFoodBowl,
+  toy: IconToyBox,
+  bookshelf: IconBookshelf,
+  plant: IconPlant,
+  window: IconWindow,
+  rug: IconRug,
+};
 
 const FURNITURE: Furniture[] = [
   { id: 'desk', name: 'Study Desk', emoji: '📚', x: 5, y: 25, w: 28, h: 35, activity: 'focus', interactable: true, description: 'Focus time!' },
@@ -210,9 +225,16 @@ export function PetRoom({
               transform: hoveredFurniture === f.id ? 'scale(1.02)' : 'scale(1)',
             }}
           >
-            <span className="text-xl select-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
-              {f.emoji}
-            </span>
+            {f.id in FURNITURE_ICONS ? (
+              (() => {
+                const Icon = FURNITURE_ICONS[f.id as keyof typeof FURNITURE_ICONS];
+                return <Icon size={28} color="rgba(255,248,230,0.4)" />;
+              })()
+            ) : (
+              <span className="text-xl select-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
+                {f.emoji}
+              </span>
+            )}
           </div>
 
           {/* Tooltip on hover */}

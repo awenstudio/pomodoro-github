@@ -17,6 +17,12 @@ import { PetRoom } from './PetRoom';
 import type { TimerActivity } from './PetRoom';
 import type { Pet } from '@/lib/pet-system';
 import type { AnimationType } from './PetSprite';
+import {
+  IconPomodoro, IconStreak, IconCard, IconXP, IconHeart,
+  IconFeed, IconPlay, IconPetHand, IconStudy, IconSleep,
+  IconFocus, IconRest, IconRelax,
+  IconMoodHappy, IconMoodNeutral, IconMoodSad,
+} from '@/lib/icons';
 
 /* ── Constants ─────────────────────────────────────── */
 
@@ -25,28 +31,28 @@ const RING_RADIUS = 20;
 
 const MODE_CONFIG: Record<
   SessionType,
-  { label: string; accent: string; glow: string; pill: string; icon: string }
+  { label: string; accent: string; glow: string; pill: string; icon: React.ReactNode }
 > = {
   work: {
     label: 'Focus',
     accent: '#5AAF5E',
     glow: 'rgba(90,175,94,0.35)',
     pill: 'rgba(90,175,94,0.18)',
-    icon: '🎯',
+    icon: <IconFocus size={12} color="#5AAF5E" />,
   },
   shortBreak: {
     label: 'Rest',
     accent: '#7BA8D1',
     glow: 'rgba(123,168,209,0.35)',
     pill: 'rgba(123,168,209,0.18)',
-    icon: '☕',
+    icon: <IconRest size={12} color="#7BA8D1" />,
   },
   longBreak: {
     label: 'Relax',
     accent: '#FF8A8A',
     glow: 'rgba(255,138,138,0.35)',
     pill: 'rgba(255,138,138,0.18)',
-    icon: '🌸',
+    icon: <IconRelax size={12} color="#FF8A8A" />,
   },
 };
 
@@ -133,7 +139,7 @@ function QuickAction({
   color,
   cooldownMs,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   count?: number;
   onClick: () => void;
@@ -193,13 +199,13 @@ function QuickAction({
 /* ── Summary Pill ──────────────────────────────────── */
 
 function SummaryPill({
-  emoji,
+  icon,
   value,
   max,
   suffix,
   glow,
 }: {
-  emoji: string;
+  icon: React.ReactNode;
   value: number;
   max?: number;
   suffix?: string;
@@ -213,7 +219,7 @@ function SummaryPill({
         boxShadow: glow ? '0 0 6px rgba(255,159,74,0.15)' : 'none',
       }}
     >
-      <span className="text-[10px] select-none">{emoji}</span>
+      {icon}
       <span className="text-[10px] font-display font-semibold tabular-nums text-cream-200/60">
         {value}{max !== undefined ? `/${max}` : suffix ? ` ${suffix}` : ''}
       </span>
@@ -479,7 +485,7 @@ export function Timer() {
           style={stagger(4)}
         >
           <QuickAction
-            icon="🍖"
+            icon={<IconFeed size={16} color="#FF9E4A" />}
             label="Feed"
             count={pet.food}
             onClick={() => handlePetInteraction('feed')}
@@ -488,28 +494,28 @@ export function Timer() {
             cooldownMs={cooldowns.feed}
           />
           <QuickAction
-            icon="⚽"
+            icon={<IconPlay size={16} color="#7BA8D1" />}
             label="Play"
             onClick={() => handlePetInteraction('play')}
             color="#7BA8D1"
             cooldownMs={cooldowns.play}
           />
           <QuickAction
-            icon="🤲"
+            icon={<IconPetHand size={16} color="#FF8A8A" />}
             label="Pet"
             onClick={() => handlePetInteraction('pet')}
             color="#FF8A8A"
             cooldownMs={cooldowns.pet}
           />
           <QuickAction
-            icon="📖"
+            icon={<IconStudy size={16} color="#C4A4F7" />}
             label="Study"
             onClick={() => { if (!isRunning) switchSession('work'); }}
             disabled={isRunning}
             color="#C4A4F7"
           />
           <QuickAction
-            icon="💤"
+            icon={<IconSleep size={16} color="#7BA8D1" />}
             label="Sleep"
             onClick={() => { if (!isRunning) switchSession('shortBreak'); }}
             disabled={isRunning}
@@ -528,14 +534,14 @@ export function Timer() {
         }}
       >
         <div className="flex items-center gap-1">
-          <SummaryPill emoji="🍅" value={completedToday} max={settings.dailyGoal} />
-          {streak.current > 0 && <SummaryPill emoji="🔥" value={streak.current} suffix="d" glow />}
+          <SummaryPill icon={<IconPomodoro size={12} color="#E86868" />} value={completedToday} max={settings.dailyGoal} />
+          {streak.current > 0 && <SummaryPill icon={<IconStreak size={12} color="#FF9E4A" />} value={streak.current} suffix="d" glow />}
         </div>
         <div className="flex items-center gap-1">
-          <SummaryPill emoji="💫" value={cardsRemaining} />
-          <SummaryPill emoji="⚡" value={playerProgress.totalXP} />
+          <SummaryPill icon={<IconCard size={12} color="#C4A4F7" />} value={cardsRemaining} />
+          <SummaryPill icon={<IconXP size={12} color="#FFD97A" />} value={playerProgress.totalXP} />
           {pet && (
-            <SummaryPill emoji="❤️" value={Math.floor(pet.affinity / 100)} suffix="%" />
+            <SummaryPill icon={<IconHeart size={12} color="#FF8A8A" />} value={Math.floor(pet.affinity / 100)} suffix="%" />
           )}
         </div>
       </div>
