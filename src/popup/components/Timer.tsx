@@ -13,6 +13,7 @@ import { PetSprite } from './PetSprite';
 import { playPet, playFeed, playLevelUp, playComplete } from '@/lib/sounds';
 import type { SessionType } from '@/types';
 import { Confetti } from './Confetti';
+import { CompletionRewardCard } from './CompletionRewardCard';
 
 /* ── Constants ─────────────────────────────────────── */
 
@@ -387,26 +388,14 @@ export function Timer() {
         {/* Celebration sparkles */}
         <Confetti active={celebrating} particleCount={30} />
         {celebrating && (
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
-            {Array.from({ length: 16 }).map((_, i) => {
-              const angle = (360 / 16) * i;
-              const rad = (angle * Math.PI) / 180;
-              const dist = 60 + Math.random() * 40;
-              return (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    background: ['#FFD700', '#FF6B6B', '#5AAF5E', '#7BA8D1', '#FF8A8A'][i % 5],
-                    animation: `sparkle${i % 4} 0.8s ease-out ${i * 50}ms forwards`,
-                    transform: `translate(-50%, -50%)`,
-                  }}
-                />
-              );
-            })}
-          </div>
+          <CompletionRewardCard
+            xpEarned={25 + (pet?.level ?? 0) * 5}
+            petMoodChange={5}
+            petName={pet?.name}
+            streakCount={1}
+            duration={25}
+            onComplete={() => setCelebrating(false)}
+          />
         )}
 
         {/* Particles when running */}
@@ -864,6 +853,17 @@ function injectKeyframes() {
     @keyframes petBreathe {
       0%, 100% { transform: scale(1) translateY(0); }
       50% { transform: scale(1.03) translateY(-2px); }
+    }
+
+    @keyframes rewardBounce {
+      0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+      60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes rewardSlideUp {
+      0% { transform: translateY(12px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
 
     @keyframes petBounceComplete {
