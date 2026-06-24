@@ -601,7 +601,7 @@ export function Timer() {
       {/* ── Pet Interaction Card (idle only) ── */}
       {pet && !isRunning && !isPaused && (
         <div
-          className="w-full rounded-2xl p-3"
+          className="w-full rounded-2xl p-4 relative overflow-hidden"
           style={{
             background: 'rgba(255,248,230,0.03)',
             border: '1px solid rgba(255,248,230,0.06)',
@@ -609,39 +609,50 @@ export function Timer() {
             ...stagger(6),
           }}
         >
+          {/* Warm glow accent */}
+          <div
+            className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
+            style={{
+              background: pet.mood >= 70
+                ? 'radial-gradient(circle, rgba(77,139,62,0.1) 0%, transparent 70%)'
+                : 'radial-gradient(circle, rgba(255,159,74,0.08) 0%, transparent 70%)',
+            }}
+          />
+
           {/* Pet mood & stats header */}
-          <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center justify-between mb-3 relative z-10">
             <div className="flex items-center gap-2">
-              <span className="text-sm select-none">
+              <span className="text-base select-none">
                 {pet.mood >= 70 ? '😊' : pet.mood >= 40 ? '😐' : '😢'}
               </span>
-              <span className="text-[11px] text-cream-200/60 font-medium">
+              <span className="text-[11px] text-cream-200 font-display font-medium">
                 {pet.name}
               </span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] text-cream-400/40">
-                ❤️ {Math.floor(pet.affinity / 100)}%
+            <div className="flex items-center gap-1 stat-pill">
+              <span className="text-[10px]">❤️</span>
+              <span className="text-[10px] font-mono text-cream-300/60">
+                {Math.floor(pet.affinity / 100)}%
               </span>
             </div>
           </div>
 
           {/* Mood bar */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[9px] text-cream-400/30 uppercase tracking-wider">Mood</span>
-              <span className="text-[9px] text-cream-400/40 font-mono">{pet.mood}</span>
+          <div className="mb-2.5 relative z-10">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-cream-400/40 font-display">Mood</span>
+              <span className="text-[10px] text-cream-400/50 font-mono">{pet.mood}</span>
             </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,248,230,0.05)' }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,248,230,0.05)' }}>
               <div
                 className="h-full rounded-full will-change-[width]"
                 style={{
                   width: `${pet.mood}%`,
                   background: pet.mood >= 70
-                    ? 'linear-gradient(90deg, #5AAF5E, #7BC47A)'
+                    ? 'linear-gradient(90deg, #4D8B3E, #6FA85C)'
                     : pet.mood >= 40
-                      ? 'linear-gradient(90deg, #FFD97A, #FF9E4A)'
-                      : 'linear-gradient(90deg, #FF6B6B, #FF8A8A)',
+                      ? 'linear-gradient(90deg, #E89B52, #FFD97A)'
+                      : 'linear-gradient(90deg, #E86868, #FF8A8A)',
                   transition: 'width 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               />
@@ -649,17 +660,17 @@ export function Timer() {
           </div>
 
           {/* Hunger bar */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[9px] text-cream-400/30 uppercase tracking-wider">Hunger</span>
-              <span className="text-[9px] text-cream-400/40 font-mono">{pet.hunger}</span>
+          <div className="mb-3 relative z-10">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-cream-400/40 font-display">Hunger</span>
+              <span className="text-[10px] text-cream-400/50 font-mono">{pet.hunger}</span>
             </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,248,230,0.05)' }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,248,230,0.05)' }}>
               <div
                 className="h-full rounded-full will-change-[width]"
                 style={{
                   width: `${pet.hunger}%`,
-                  background: 'linear-gradient(90deg, #FF9E4A, #FFD97A)',
+                  background: 'linear-gradient(90deg, #E89B52, #FFD97A)',
                   transition: 'width 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               />
@@ -667,7 +678,7 @@ export function Timer() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 relative z-10">
             <PetActionButton
               icon="🍖"
               label="Feed"
@@ -772,10 +783,10 @@ function PetActionButton({
         />
       )}
       <span className="text-base select-none relative z-10">{icon}</span>
-      <span className="text-[9px] text-cream-400/40 font-medium relative z-10">
+      <span className="text-[10px] text-cream-400/50 font-display relative z-10">
         {label}
         {count !== undefined && (
-          <span className="ml-0.5 font-mono">{count}</span>
+          <span className="ml-0.5 font-mono text-cream-300/60">{count}</span>
         )}
       </span>
     </button>
@@ -806,7 +817,7 @@ function SummaryPill({
       <span className="text-xs select-none">{emoji}</span>
       <AnimatedNumber
         value={value}
-        className="text-[11px] font-mono font-medium tabular-nums text-cream-200/60"
+        className="text-[11px] font-display font-semibold tabular-nums text-cream-200/70"
         suffix={max !== undefined ? `/${max}` : suffix ? ` ${suffix}` : ''}
       />
     </div>

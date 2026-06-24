@@ -37,6 +37,9 @@ All notable changes to Pawodoro will be documented in this file.
 - Growing tip uses double drop-shadow for warmth
 - Inner glow circle adds ambient depth
 - Time display: Quicksand font-bold replaces mono font-light
+- Pet interaction card: warm glow accent, refined mood/hunger bars
+- SummaryPill: Quicksand font-semibold instead of mono
+- PetActionButton: font-display labels, cream-300/60 counts
 
 **Stats.tsx**
 - Full rewrite with new design system
