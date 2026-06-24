@@ -185,3 +185,54 @@
     box-shadow: 0 0 20px rgba(255, 159, 74, 0.15);
   }
 }
+
+/* ── Premium Transitions ───────────────────────────── */
+
+.transition-spring {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Ring Glow ─────────────────────────────────────── */
+
+.ring-glow {
+  filter: drop-shadow(0 0 12px var(--ring-glow-color, rgba(90,175,94,0.4)));
+  transition: filter 0.5s ease;
+}
+
+/* ── Glass Card Variants ──────────────────────────── */
+
+.glass-card {
+  background: rgba(255, 248, 230, 0.03);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 248, 230, 0.06);
+  border-radius: 1rem;
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 248, 230, 0.06);
+  border-color: rgba(255, 248, 230, 0.1);
+}
+
+/* ── Stat Pill ─────────────────────────────────────── */
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: rgba(255, 248, 230, 0.04);
+  border: 1px solid rgba(255, 248, 230, 0.06);
+  font-size: 0.6875rem;
+  color: rgba(255, 248, 230, 0.5);
+  transition: all 0.2s ease;
+}
+
+.stat-pill:hover {
+  background: rgba(255, 248, 230, 0.07);
+  border-color: rgba(255, 248, 230, 0.1);
+}
