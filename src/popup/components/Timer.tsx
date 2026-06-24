@@ -266,12 +266,11 @@ export function Timer() {
               <button
                 key={type}
                 onClick={() => switchSession(type)}
-                disabled={isRunning}
                 className="relative z-10 px-4 py-1.5 rounded-xl text-xs font-medium transition-all duration-200"
                 style={{
                   color: active ? cfg.accent : 'rgba(255,248,230,0.35)',
-                  opacity: isRunning && !active ? 0.4 : 1,
-                  cursor: isRunning ? 'not-allowed' : 'pointer',
+                  opacity: 1,
+                  cursor: 'pointer',
                   transform: active ? 'scale(1)' : 'scale(0.95)',
                 }}
               >

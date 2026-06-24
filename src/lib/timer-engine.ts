@@ -120,7 +120,6 @@ export function timerReducer(
     }
 
     case 'SWITCH_SESSION': {
-      if (state.status === 'running') return { state, effects }; // Don't switch while running
       const duration = getDuration(event.sessionType, settings);
       return {
         state: {

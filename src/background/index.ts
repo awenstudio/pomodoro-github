@@ -421,9 +421,25 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
     }
 
     case 'SWITCH_SESSION': {
-      // Only allow switching when idle
-      if (currentState.status !== 'idle') {
-        return { success: false, error: 'Cannot switch while timer is running' };
+      // Allow switching always - if running, pause first then switch
+      if (currentState.status === 'running') {
+        // Record elapsed time for interrupted session
+        const elapsed = currentState.totalTime - currentState.timeLeft;
+        if (elapsed > 10) {
+          const session: TimerSession = {
+            id: crypto.randomUUID(),
+            type: currentState.currentSessionType,
+            startedAt: new Date(Date.now() - elapsed * 1000).toISOString(),
+            endedAt: new Date().toISOString(),
+            duration: currentState.totalTime,
+            elapsed,
+            completed: false,
+            interrupted: true,
+            task: currentState.currentTask,
+          };
+          await addSession(session);
+        }
+        stopTickAlarm();
       }
       const result = timerReducer(currentState, { type: 'SWITCH_SESSION', sessionType: msg.sessionType }, cachedSettings);
       currentState = result.state;
