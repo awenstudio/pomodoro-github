@@ -91,14 +91,22 @@ function getPetAnimation(activity: TimerActivity, isRunning: boolean, override?:
   }
 }
 
-/* ── Mood emoji ────────────────────────────────────── */
+/* ── Mood indicator ──────────────────────────────────── */
 
-function getMoodEmoji(mood: number): string {
-  if (mood >= 80) return '😊';
-  if (mood >= 60) return '🙂';
-  if (mood >= 40) return '😐';
-  if (mood >= 20) return '😢';
-  return '😿';
+function getMoodColor(mood: number): string {
+  if (mood >= 80) return '#6FA85C';
+  if (mood >= 60) return '#8BC47A';
+  if (mood >= 40) return '#E89B52';
+  if (mood >= 20) return '#E86868';
+  return '#CC4444';
+}
+
+function getMoodLabel(mood: number): string {
+  if (mood >= 80) return 'Happy';
+  if (mood >= 60) return 'Content';
+  if (mood >= 40) return 'Okay';
+  if (mood >= 20) return 'Down';
+  return 'Sad';
 }
 
 /* ── Component ─────────────────────────────────────── */
@@ -149,6 +157,14 @@ export function PetRoom({
         boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.2)',
       }}
     >
+      {/* Room background image */}
+      <img
+        src="/ui/room-bg.png"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+        style={{ mixBlendMode: 'soft-light' }}
+      />
+
       {/* Room ambient light */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -278,7 +294,11 @@ export function PetRoom({
           className="absolute left-1/2 -translate-x-1/2 text-[9px] font-display text-cream-300/60 whitespace-nowrap"
           style={{ bottom: -14 }}
         >
-          {pet.name} {getMoodEmoji(pet.mood)}
+          {pet.name}
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full ml-1"
+            style={{ background: getMoodColor(pet.mood), boxShadow: `0 0 4px ${getMoodColor(pet.mood)}` }}
+          />
         </div>
 
         {/* Reaction bubble */}
@@ -310,9 +330,13 @@ export function PetRoom({
 
       {/* Room label */}
       <div
-        className="absolute bottom-2 left-3 text-[8px] font-display text-cream-400/20 uppercase tracking-widest"
+        className="absolute bottom-2 left-3 text-[8px] font-display text-cream-400/20 uppercase tracking-widest flex items-center gap-1"
       >
-        {activity === 'focus' ? '📚 Study' : activity === 'rest' ? '🛏️ Bedroom' : activity === 'relax' ? '📖 Library' : '🏠 Living Room'}
+        <span
+          className="w-1 h-1 rounded-full"
+          style={{ background: activity === 'focus' ? '#5AAF5E' : activity === 'rest' ? '#7BA8D1' : activity === 'relax' ? '#FF8A8A' : 'rgba(255,248,230,0.2)' }}
+        />
+        {activity === 'focus' ? 'Study' : activity === 'rest' ? 'Bedroom' : activity === 'relax' ? 'Library' : 'Living Room'}
       </div>
 
       {/* Ambient particles */}
