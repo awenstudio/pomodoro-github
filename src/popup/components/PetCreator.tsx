@@ -58,9 +58,9 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
     <div className="flex flex-col items-center gap-5 p-4">
       {/* Header */}
       <div className="text-center" style={stagger(0)}>
-        <span className="text-3xl mb-2 block" style={{ animation: 'petBreathe 3s ease-in-out infinite' }}>🐾</span>
-        <h2 className="text-lg font-semibold text-cream-100 mb-1">Choose Your Companion</h2>
-        <p className="text-xs text-gray-400">Your pet grows as you focus together.</p>
+        <span className="text-3xl mb-2 block" style={{ animation: 'petBounce 2s ease-in-out infinite' }}>🐾</span>
+        <h2 className="font-display text-lg font-bold text-cream-100 mb-1">Choose Your Companion</h2>
+        <p className="text-xs text-cream-400/50">Your pet grows as you focus together.</p>
       </div>
 
       {/* Pet selection grid */}
@@ -94,8 +94,8 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
               <div style={{ transform: isSelected ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
                 <PetSprite species={species} animation="static" size={64} className="mx-auto" />
               </div>
-              <span className="text-xs text-cream-100 font-medium relative z-10">{label}</span>
-              <span className="text-[9px] text-gray-500 relative z-10">{desc}</span>
+              <span className="text-xs text-cream-200 font-display font-medium relative z-10">{label}</span>
+              <span className="text-[9px] text-cream-400/30 relative z-10">{desc}</span>
             </button>
           );
         })}
@@ -110,8 +110,8 @@ export function PetCreator({ onCreate }: PetCreatorProps) {
             animation: 'onboardingPetEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both',
           }}
         >
-          <span className="text-xs text-gray-400">
-            You selected: <span className="text-cream-100">{selectedPet.label}</span> {selectedPet.emoji}
+          <span className="text-xs text-cream-400/40">
+            You selected: <span className="text-cream-100 font-display font-medium">{selectedPet.label}</span> {selectedPet.emoji}
           </span>
         </div>
       )}
