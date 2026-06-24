@@ -437,55 +437,41 @@ export function Timer() {
           <defs>
             <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={mode.accent} stopOpacity="1" />
-              <stop offset="50%" stopColor={mode.accent} stopOpacity="0.8" />
-              <stop offset="100%" stopColor={mode.accent} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={mode.accent} stopOpacity="0.6" />
             </linearGradient>
             <filter id="ring-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feGaussianBlur stdDeviation="6" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
+            {/* Organic texture filter */}
+            <filter id="organic-noise">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
           </defs>
 
-          {/* Background track */}
+          {/* Background track — soft, organic */}
           <circle
             cx={RING_CENTER}
             cy={RING_CENTER}
             r={RING_RADIUS}
             fill="none"
             stroke="rgba(255,248,230,0.04)"
-            strokeWidth="6"
+            strokeWidth="8"
+            strokeLinecap="round"
           />
 
-          {/* Tick marks */}
-          {Array.from({ length: 60 }).map((_, i) => {
-            const angle = (i * 6 * Math.PI) / 180;
-            const isMajor = i % 5 === 0;
-            const innerR = isMajor ? 78 : 80;
-            const outerR = 84;
-            return (
-              <line
-                key={i}
-                x1={RING_CENTER + innerR * Math.cos(angle)}
-                y1={RING_CENTER + innerR * Math.sin(angle)}
-                x2={RING_CENTER + outerR * Math.cos(angle)}
-                y2={RING_CENTER + outerR * Math.sin(angle)}
-                stroke={`rgba(255,248,230,${isMajor ? 0.1 : 0.04})`}
-                strokeWidth={isMajor ? 1.5 : 0.5}
-              />
-            );
-          })}
-
-          {/* Progress ring */}
+          {/* Progress ring — organic feel */}
           <circle
             cx={RING_CENTER}
             cy={RING_CENTER}
             r={RING_RADIUS}
             fill="none"
             stroke="url(#ring-gradient)"
-            strokeWidth="6"
+            strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={dashOffset}
@@ -495,7 +481,7 @@ export function Timer() {
             }}
           />
 
-          {/* Progress cap glow dot */}
+          {/* Growing tip — organic dot at progress end */}
           {timerProgress > 0.01 && (
             <circle
               cx={
@@ -506,15 +492,25 @@ export function Timer() {
                 RING_CENTER +
                 RING_RADIUS * Math.sin((timerProgress * 360 - 90) * (Math.PI / 180))
               }
-              r="4"
+              r="5"
               fill={mode.accent}
-              opacity={isRunning ? 0.9 : 0.5}
+              opacity={isRunning ? 1 : 0.6}
               style={{
-                filter: `drop-shadow(0 0 6px ${mode.accent})`,
+                filter: `drop-shadow(0 0 8px ${mode.accent}) drop-shadow(0 0 2px ${mode.accent})`,
                 transition: 'cx 0.8s cubic-bezier(0.22,1,0.36,1), cy 0.8s cubic-bezier(0.22,1,0.36,1)',
               }}
             />
           )}
+
+          {/* Inner glow circle — warm ambient */}
+          <circle
+            cx={RING_CENTER}
+            cy={RING_CENTER}
+            r={RING_RADIUS - 12}
+            fill="none"
+            stroke="rgba(255,248,230,0.02)"
+            strokeWidth="1"
+          />
         </svg>
 
         {/* Center content: Pet + Time */}
