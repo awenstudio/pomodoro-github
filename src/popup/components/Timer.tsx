@@ -317,7 +317,7 @@ export function Timer() {
 
   return (
     <div
-      className="flex flex-col items-center gap-4 px-4 pt-2 pb-4"
+      className="flex flex-col items-center gap-5 px-4 pt-2 pb-4"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
