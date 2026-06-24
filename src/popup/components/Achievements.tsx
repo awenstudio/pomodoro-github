@@ -52,8 +52,8 @@ export function Achievements({ dailyStats, streak }: AchievementsProps) {
   return (
     <div className="glass rounded-2xl p-3">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-medium text-cream-300">Achievements</h3>
-        <span className="text-[10px] text-gray-600 font-mono">
+        <h3 className="text-xs font-display font-bold text-cream-200">Achievements</h3>
+        <span className="text-[10px] text-cream-400/30 font-mono">
           {unlockedCount}/{achievements.length}
         </span>
       </div>

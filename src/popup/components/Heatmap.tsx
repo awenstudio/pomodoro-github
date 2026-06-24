@@ -83,7 +83,7 @@ export function Heatmap({ dailyStats }: HeatmapProps) {
 
   return (
     <div className="glass rounded-2xl p-3">
-      <h3 className="text-xs font-medium text-cream-300 mb-3">Focus Heatmap</h3>
+      <h3 className="text-xs font-display font-bold text-cream-200 mb-3">Focus Heatmap</h3>
 
       <div className="overflow-x-auto">
         <svg width={totalWidth} height={totalHeight} className="select-none">
