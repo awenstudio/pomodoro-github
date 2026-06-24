@@ -87,7 +87,7 @@ export function Settings() {
 
       {/* Timer durations */}
       <div className="glass rounded-2xl p-3" style={stagger(0)}>
-        <h3 className="text-xs font-medium text-cream-300 mb-3">Timer</h3>
+        <h3 className="text-xs font-display font-bold text-cream-200 mb-3">Timer</h3>
         <div className="flex flex-col gap-2.5">
           <SettingRow label="Focus (min)">
             <NumberInput
@@ -134,7 +134,7 @@ export function Settings() {
 
       {/* Behavior */}
       <div className="glass rounded-2xl p-3" style={stagger(1)}>
-        <h3 className="text-xs font-medium text-cream-300 mb-3">Behavior</h3>
+        <h3 className="text-xs font-display font-bold text-cream-200 mb-3">Behavior</h3>
         <div className="flex flex-col gap-2.5">
           <ToggleRow
             label="Auto-start Breaks"
@@ -161,7 +161,7 @@ export function Settings() {
 
       {/* Data */}
       <div className="glass rounded-2xl p-3" style={stagger(2)}>
-        <h3 className="text-xs font-medium text-cream-300 mb-3">Data</h3>
+        <h3 className="text-xs font-display font-bold text-cream-200 mb-3">Data</h3>
         <button
           onClick={handleClearData}
           className="text-xs px-3 py-1.5 rounded-lg transition-all duration-200"
@@ -177,7 +177,7 @@ export function Settings() {
       {/* Google Sync */}
       <div className="glass rounded-2xl p-3 border border-white/5" style={stagger(3)}>
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs text-cream-300 font-medium">☁️ Cloud Sync</span>
+          <span className="text-xs text-cream-200 font-display font-bold">☁️ Cloud Sync</span>
           <span className="text-[9px] text-gray-600 bg-surface-3 px-1.5 py-0.5 rounded-full">
             optional
           </span>
@@ -260,7 +260,7 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-300">{label}</span>
+      <span className="text-xs text-cream-300/60 font-display">{label}</span>
       {children}
     </div>
   );
