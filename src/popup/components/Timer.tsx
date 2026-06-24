@@ -10,8 +10,9 @@ import { useTimer } from '../hooks/useTimer';
 import { Controls } from './Controls';
 import { getLevelFromXP, getMaxForgivenessCards } from '@/lib/gamification';
 import { PetSprite } from './PetSprite';
-import { playPet, playFeed, playLevelUp } from '@/lib/sounds';
+import { playPet, playFeed, playLevelUp, playComplete } from '@/lib/sounds';
 import type { SessionType } from '@/types';
+import { Confetti } from './Confetti';
 
 /* ── Constants ─────────────────────────────────────── */
 
@@ -273,6 +274,7 @@ export function Timer() {
   useEffect(() => {
     if (prevProgress.current > 0.95 && timerProgress < 0.05) {
       setCelebrating(true);
+      playComplete();
       setTimeout(() => setCelebrating(false), 3000);
     }
     prevProgress.current = timerProgress;
@@ -383,6 +385,7 @@ export function Timer() {
         )}
 
         {/* Celebration sparkles */}
+        <Confetti active={celebrating} particleCount={30} />
         {celebrating && (
           <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
             {Array.from({ length: 16 }).map((_, i) => {

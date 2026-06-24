@@ -458,6 +458,25 @@
   }
 }
 
+/* ── Confetti Particles ────────────────────────────── */
+
+@keyframes confettiFall0 {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(500px) translateX(-60px) rotate(720deg); opacity: 0; }
+}
+@keyframes confettiFall1 {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(480px) translateX(50px) rotate(-540deg); opacity: 0; }
+}
+@keyframes confettiFall2 {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(520px) translateX(-30px) rotate(600deg); opacity: 0; }
+}
+@keyframes confettiFall3 {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(460px) translateX(40px) rotate(-480deg); opacity: 0; }
+}
+
 /* ── Reduced Motion ────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
