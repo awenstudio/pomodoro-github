@@ -1,8 +1,8 @@
 /* ─────────────────────────────────────────────────────
  *  Controls — Premium pawodoro play/pause/skip/reset.
  *  Glass morphism, spring animations, haptic feel.
- *  v2: Enhanced micro-interactions, ripple effects,
- *  keyboard shortcuts, gesture support.
+ *  v3: Fixed stale closure in keyboard handler,
+ *  improved micro-interactions.
  * ───────────────────────────────────────────────────── */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -15,36 +15,52 @@ export function Controls() {
   const [skipRotation, setSkipRotation] = useState(0);
   const [resetSpin, setResetSpin] = useState(0);
 
-  // Keyboard shortcuts
+  // Use refs to avoid stale closures in keyboard handler
+  const stateRef = useRef({ isRunning, isPaused });
+  stateRef.current = { isRunning, isPaused };
+
+  const actionsRef = useRef({ start, pause, resume, skip, reset });
+  actionsRef.current = { start, pause, resume, skip, reset };
+
+  // Keyboard shortcuts — stable handler using refs
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
+      const { isRunning, isPaused } = stateRef.current;
+      const { start, pause, resume, skip, reset } = actionsRef.current;
+
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          handlePlayPause();
+          if (isRunning) { pause(); playPause(); }
+          else if (isPaused) { resume(); playStart(); }
+          else { start(); playStart(); }
           break;
         case 'KeyS':
           if (e.metaKey || e.ctrlKey) return;
-          handleSkip();
+          playSkip();
+          skip();
           break;
         case 'KeyR':
           if (e.metaKey || e.ctrlKey) return;
-          handleReset();
+          playReset();
+          reset();
           break;
         case 'ArrowRight':
           if (e.metaKey || e.ctrlKey) return;
-          handleSkip();
+          playSkip();
+          skip();
           break;
         case 'ArrowLeft':
           if (e.metaKey || e.ctrlKey) return;
-          handleReset();
+          playReset();
+          reset();
           break;
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isRunning, isPaused, start, pause, resume, skip, reset]);
+  }, []); // Empty deps — refs handle freshness
 
   const handlePlayPause = useCallback(() => {
     setPlayRipple(true);
@@ -161,7 +177,7 @@ export function Controls() {
       >
         <svg
           className="w-4 h-4 transition-transform duration-500"
-          style={{ transform: `translateX(${skipRotation % 360 === 0 ? 0 : (skipRotation % 180 === 0 ? 0 : 2)}px)` }}
+          style={{ transform: `translateX(${skipRotation % 180 === 0 ? 0 : 2}px)` }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

@@ -2,9 +2,11 @@
  *  PetSprite — Frame-by-frame sprite animation using
  *  AI-generated pet illustrations. Supports idle,
  *  walk, hatch, focus, rest, relax animations.
+ *  v2: Fixed stale closure, optimized preloading,
+ *  smoother frame transitions.
  * ───────────────────────────────────────────────────── */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export type AnimationType = 'idle' | 'walk' | 'hatch' | 'focus' | 'rest' | 'relax' | 'static';
 
@@ -36,7 +38,6 @@ const PORTRAITS: Record<string, string> = {
 };
 
 /* ── Timer state → pet state image mapping ──── */
-// Maps (species, timerAnimation) to specific state image filenames
 const STATE_MAP: Record<string, Record<string, string>> = {
   shiba: {
     focus: '/pets/shiba-inu-standing.png',
@@ -75,6 +76,19 @@ const STATE_MAP: Record<string, Record<string, string>> = {
     static: '/pets/fox.png',
   },
 };
+
+/* ── Image cache to avoid re-preloading ──── */
+const imageCache = new Map<string, boolean>();
+
+function preloadImage(url: string): Promise<boolean> {
+  if (imageCache.has(url)) return Promise.resolve(imageCache.get(url)!);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { imageCache.set(url, true); resolve(true); };
+    img.onerror = () => { imageCache.set(url, false); resolve(false); };
+    img.src = url;
+  });
+}
 
 /* ── Animation frame sets ──── */
 function getFrames(species: string, animation: AnimationType): string[] {
@@ -152,21 +166,15 @@ export function PetSprite({
   const frames = getFrames(species, animation);
   framesRef.current = frames;
 
-  // Preload images
+  // Callback ref for onHatchComplete to avoid stale closure
+  const hatchCallbackRef = useRef(onHatchComplete);
+  hatchCallbackRef.current = onHatchComplete;
+
+  // Preload images with cache
   useEffect(() => {
     setImagesLoaded(false);
     setCurrentFrame(0);
-    Promise.all(
-      frames.map(
-        (url) =>
-          new Promise<void>((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = () => resolve();
-            img.src = url;
-          }),
-      ),
-    ).then(() => {
+    Promise.all(frames.map(preloadImage)).then(() => {
       setImagesLoaded(true);
     });
   }, [species, animation]);
@@ -178,17 +186,18 @@ export function PetSprite({
     }
   }, [frames]);
 
-  // Frame loop
+  // Frame loop — using refs to avoid stale closure
   useEffect(() => {
-    if (!imagesLoaded || frames.length === 0) return;
+    if (!imagesLoaded || framesRef.current.length === 0) return;
 
     const timer = setInterval(() => {
+      const currentFrames = framesRef.current;
       setCurrentFrame((prev) => {
-        const next = (prev + 1) % frames.length;
-        setImgSrc(frames[next]);
+        const next = (prev + 1) % currentFrames.length;
+        setImgSrc(currentFrames[next]);
 
-        if (isHatching && next === 0 && onHatchComplete) {
-          onHatchComplete();
+        if (isHatching && next === 0 && hatchCallbackRef.current) {
+          hatchCallbackRef.current();
         }
 
         return next;
@@ -196,7 +205,7 @@ export function PetSprite({
     }, frameRate);
 
     return () => clearInterval(timer);
-  }, [imagesLoaded, frames, frameRate, isHatching, onHatchComplete]);
+  }, [imagesLoaded, frameRate, isHatching]);
 
   const animClass = ANIMATION_CLASSES[animation] || '';
 
