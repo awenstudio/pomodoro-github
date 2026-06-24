@@ -10,6 +10,7 @@ import { useTimer } from '../hooks/useTimer';
 import { Controls } from './Controls';
 import { getLevelFromXP, getMaxForgivenessCards } from '@/lib/gamification';
 import { PetSprite } from './PetSprite';
+import { playPet, playFeed, playLevelUp } from '@/lib/sounds';
 import type { SessionType } from '@/types';
 
 /* ── Constants ─────────────────────────────────────── */
@@ -672,20 +673,20 @@ export function Timer() {
               icon="🍖"
               label="Feed"
               count={pet.food}
-              onClick={feedPet}
+              onClick={() => { playFeed(); feedPet(); }}
               disabled={pet.food <= 0}
               color="#FF9E4A"
             />
             <PetActionButton
               icon="⚽"
               label="Play"
-              onClick={playWithPet}
+              onClick={() => { playPet(); playWithPet(); }}
               color="#7BA8D1"
             />
             <PetActionButton
               icon="🤲"
               label="Pet"
-              onClick={petPet}
+              onClick={() => { playPet(); petPet(); }}
               color="#FF8A8A"
             />
           </div>

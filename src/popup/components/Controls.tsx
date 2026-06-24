@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTimer } from '../hooks/useTimer';
+import { playStart, playPause, playSkip, playReset } from '@/lib/sounds';
 
 export function Controls() {
   const { isRunning, isPaused, start, pause, resume, skip, reset } = useTimer();
@@ -48,18 +49,20 @@ export function Controls() {
   const handlePlayPause = useCallback(() => {
     setPlayRipple(true);
     setTimeout(() => setPlayRipple(false), 500);
-    if (isRunning) pause();
-    else if (isPaused) resume();
-    else start();
+    if (isRunning) { pause(); playPause(); }
+    else if (isPaused) { resume(); playStart(); }
+    else { start(); playStart(); }
   }, [isRunning, isPaused, start, pause, resume]);
 
   const handleSkip = useCallback(() => {
     setSkipRotation((prev) => prev + 180);
+    playSkip();
     skip();
   }, [skip]);
 
   const handleReset = useCallback(() => {
     setResetSpin((prev) => prev + 360);
+    playReset();
     reset();
   }, [reset]);
 

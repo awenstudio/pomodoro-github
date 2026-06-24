@@ -1,98 +1,95 @@
 /* ─────────────────────────────────────────────────────
- *  Sound effects — Web Audio API for timer alerts.
- *  No external files needed, generates tones in-memory.
+ *  Sounds — Web Audio API sound effects.
+ *  Synthesized, no external files needed.
  * ───────────────────────────────────────────────────── */
 
-const AudioCtx =
-  typeof AudioContext !== 'undefined'
-    ? AudioContext
-    // @ts-expect-error — Safari fallback
-    : typeof webkitAudioContext !== 'undefined'
-      ? (window as any).webkitAudioContext
-      : null;
+let audioCtx: AudioContext | null = null;
 
-let ctx: AudioContext | null = null;
-
-function getCtx(): AudioContext | null {
-  if (!AudioCtx) return null;
-  if (!ctx) {
-    ctx = new AudioCtx();
+function getCtx(): AudioContext {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
   }
-  return ctx;
+  return audioCtx;
 }
 
 function playTone(
   frequency: number,
   duration: number,
   type: OscillatorType = 'sine',
-  volume = 0.3,
-): void {
-  const audioCtx = getCtx();
-  if (!audioCtx) return;
+  volume = 0.15,
+  ramp = true,
+) {
+  try {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
 
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    if (ramp) {
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    }
 
-  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(
-    0.001,
-    audioCtx.currentTime + duration,
-  );
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start(audioCtx.currentTime);
-  osc.stop(audioCtx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch {
+    // Audio not available
+  }
 }
 
-/**
- * Play a pleasant "pomodoro complete" chime.
- * Three ascending tones.
- */
-export function playCompleteSound(): void {
-  const audioCtx = getCtx();
-  if (!audioCtx) return;
+/* ── Public API ────────────────────────────────────── */
 
-  // Resume context (required after user gesture in Chrome)
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  playTone(523.25, 0.2, 'sine', 0.25); // C5
-  setTimeout(() => playTone(659.25, 0.2, 'sine', 0.25), 200); // E5
-  setTimeout(() => playTone(783.99, 0.4, 'sine', 0.3), 400); // G5
+export function playStart() {
+  playTone(523.25, 0.1, 'sine', 0.12); // C5
+  setTimeout(() => playTone(659.25, 0.1, 'sine', 0.12), 80); // E5
+  setTimeout(() => playTone(783.99, 0.15, 'sine', 0.15), 160); // G5
 }
 
-/**
- * Play a soft "break over" tone.
- * Two descending tones.
- */
-export function playBreakOverSound(): void {
-  const audioCtx = getCtx();
-  if (!audioCtx) return;
-
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  playTone(783.99, 0.15, 'sine', 0.2); // G5
-  setTimeout(() => playTone(523.25, 0.3, 'sine', 0.2), 150); // C5
+export function playPause() {
+  playTone(783.99, 0.1, 'sine', 0.1); // G5
+  setTimeout(() => playTone(523.25, 0.15, 'sine', 0.1), 80); // C5
 }
 
-/**
- * Play a subtle click sound for button presses.
- */
-export function playClickSound(): void {
-  const audioCtx = getCtx();
-  if (!audioCtx) return;
+export function playComplete() {
+  // Success chime — ascending arpeggio
+  playTone(523.25, 0.15, 'sine', 0.12); // C5
+  setTimeout(() => playTone(659.25, 0.15, 'sine', 0.12), 120); // E5
+  setTimeout(() => playTone(783.99, 0.15, 'sine', 0.12), 240); // G5
+  setTimeout(() => playTone(1046.5, 0.3, 'sine', 0.18), 360); // C6
+}
 
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+export function playSkip() {
+  playTone(880, 0.08, 'sine', 0.08); // A5
+}
 
-  playTone(800, 0.05, 'sine', 0.1);
+export function playReset() {
+  playTone(440, 0.08, 'sine', 0.08); // A4
+  setTimeout(() => playTone(330, 0.12, 'sine', 0.08), 60); // E4
+}
+
+export function playPet() {
+  // Cute pet sound
+  playTone(880, 0.06, 'sine', 0.08);
+  setTimeout(() => playTone(1108.73, 0.06, 'sine', 0.08), 60);
+  setTimeout(() => playTone(880, 0.1, 'sine', 0.1), 120);
+}
+
+export function playFeed() {
+  // Munch sound
+  playTone(300, 0.05, 'square', 0.06);
+  setTimeout(() => playTone(350, 0.05, 'square', 0.06), 80);
+  setTimeout(() => playTone(400, 0.08, 'square', 0.08), 160);
+}
+
+export function playLevelUp() {
+  // Celebration fanfare
+  const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+  notes.forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.12, 'sine', 0.12), i * 100);
+  });
 }
