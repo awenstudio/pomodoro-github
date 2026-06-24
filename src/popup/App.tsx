@@ -11,6 +11,7 @@ import { Settings } from './components/Settings';
 import { Onboarding } from './components/Onboarding';
 import { PetCreator } from './components/PetCreator';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { KeyboardHints } from './components/KeyboardHints';
 import { useTimer } from './hooks/useTimer';
 
 type Tab = 'timer' | 'stats' | 'settings';
@@ -215,6 +216,7 @@ export default function App() {
           </div>
         </nav>
       </div>
+      <KeyboardHints />
     </ErrorBoundary>
   );
 }
