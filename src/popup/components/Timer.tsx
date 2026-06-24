@@ -534,7 +534,7 @@ export function Timer() {
           {/* Time display */}
           <div className="flex flex-col items-center -mt-1">
             <span
-              className="text-4xl font-light tracking-widest font-mono tabular-nums"
+              className="text-4xl font-semibold tracking-wider font-display tabular-nums"
               style={{
                 color: isRunning ? '#FFF8E6' : isPaused ? mode.accent : 'rgba(255,248,230,0.3)',
                 textShadow: isRunning ? `0 0 20px ${mode.glow}` : 'none',
