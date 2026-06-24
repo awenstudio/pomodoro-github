@@ -72,9 +72,14 @@ All notable changes to Pawodoro will be documented in this file.
 
 - CSS `@import` order fixed (must precede `@tailwind` directives)
 - Removed dead code: `PetDisplay.tsx` (replaced by PetSprite)
+- Eliminated all gray-600/500/400 — entire app uses warm cream-400/XX palette
+- ErrorBoundary: Quicksand header, warm error message, cream tones
+- Achievements + Heatmap: consistent Quicksand typography
+- Pet interaction card: warm glow accent, refined mood/hunger bars
+- SummaryPill: Quicksand font-semibold
 - Auto-test loop stable: 54/54 tests passing
 - Build time: ~550ms
-- Bundle: popup JS 208KB (gzip 64KB), CSS 27KB (gzip 6KB)
+- Bundle: popup JS 209KB (gzip 64KB), CSS 27KB (gzip 6KB)
 
 ---
 
