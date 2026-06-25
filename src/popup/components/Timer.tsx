@@ -26,8 +26,8 @@ import {
 
 /* ── Constants ─────────────────────────────────────── */
 
-const CIRCUMFERENCE = 2 * Math.PI * 20;
-const RING_RADIUS = 20;
+const CIRCUMFERENCE = 2 * Math.PI * 21;
+const RING_RADIUS = 21;
 
 const MODE_CONFIG: Record<
   SessionType,
@@ -178,18 +178,18 @@ function QuickAction({
       className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl relative overflow-hidden
                  transition-all duration-200 group"
       style={{
-        background: pressed ? `${color}15` : 'rgba(255,248,230,0.03)',
-        border: `1px solid ${pressed ? `${color}30` : 'rgba(255,248,230,0.04)'}`,
+        background: pressed ? `${color}22` : `${color}10`,
+        border: `1px solid ${pressed ? `${color}50` : `${color}28`}`,
         opacity: disabled ? 0.3 : onCooldown ? 0.6 : 1,
         cursor: disabled || onCooldown ? 'not-allowed' : 'pointer',
         transform: pressed ? 'scale(0.93)' : 'scale(1)',
       }}
     >
       <span className="text-sm select-none relative z-10 group-hover:scale-110 transition-transform">{icon}</span>
-      <span className="text-[9px] text-cream-400/40 font-display relative z-10">
+      <span className="text-[10px] font-display relative z-10" style={{ color: `${color}BB` }}>
         {onCooldown ? `${Math.ceil(cooldown / 1000)}s` : label}
         {count !== undefined && !onCooldown && (
-          <span className="ml-0.5 font-mono text-cream-300/50">{count}</span>
+          <span className="ml-0.5 font-mono" style={{ color: `${color}88` }}>{count}</span>
         )}
       </span>
     </button>
@@ -215,12 +215,13 @@ function SummaryPill({
     <div
       className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
       style={{
-        background: 'rgba(255,248,230,0.03)',
-        boxShadow: glow ? '0 0 6px rgba(255,159,74,0.15)' : 'none',
+        background: 'rgba(255,248,230,0.07)',
+        border: '1px solid rgba(255,248,230,0.08)',
+        boxShadow: glow ? '0 0 6px rgba(255,159,74,0.2)' : 'none',
       }}
     >
       {icon}
-      <span className="text-[10px] font-display font-semibold tabular-nums text-cream-200/60">
+      <span className="text-[11px] font-display font-semibold tabular-nums" style={{ color: 'rgba(255,248,230,0.75)' }}>
         {value}{max !== undefined ? `/${max}` : suffix ? ` ${suffix}` : ''}
       </span>
     </div>
@@ -407,50 +408,56 @@ export function Timer() {
         )}
       </div>
 
-      {/* ── Timer Bar (compact, QQ Pet style) ── */}
+      {/* ── Timer Bar ── */}
       <div
-        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl"
         style={{
-          background: 'rgba(255,248,230,0.03)',
-          border: '1px solid rgba(255,248,230,0.05)',
+          background: 'rgba(255,248,230,0.06)',
+          border: `1px solid rgba(255,248,230,0.1)`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04)`,
           ...stagger(2),
         }}
       >
-        {/* Mini progress ring */}
-        <div className="relative" style={{ width: 40, height: 40 }}>
+        {/* Progress ring */}
+        <div className="relative flex-shrink-0" style={{ width: 48, height: 48 }}>
           <svg viewBox="0 0 44 44" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="22" cy="22" r={RING_RADIUS} fill="none" stroke="rgba(255,248,230,0.06)" strokeWidth="3" strokeLinecap="round" />
+            <circle cx="22" cy="22" r={RING_RADIUS} fill="none" stroke="rgba(255,248,230,0.08)" strokeWidth="3.5" strokeLinecap="round" />
             <circle
               cx="22" cy="22" r={RING_RADIUS}
-              fill="none" stroke={mode.accent} strokeWidth="3" strokeLinecap="round"
+              fill="none" stroke={mode.accent} strokeWidth="3.5" strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
               strokeDashoffset={dashOffset}
-              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+              style={{
+                transition: 'stroke-dashoffset 0.8s ease',
+                filter: isRunning ? `drop-shadow(0 0 3px ${mode.accent})` : 'none',
+              }}
             />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] select-none">
+          <span className="absolute inset-0 flex items-center justify-center text-[11px] select-none">
             {mode.icon}
           </span>
         </div>
 
         {/* Time + Label */}
-        <div className="flex-1">
-          <span
-            className="text-2xl font-semibold tracking-wider font-display tabular-nums"
-            style={{
-              color: isRunning ? '#FFF8E6' : isPaused ? mode.accent : 'rgba(255,248,230,0.3)',
-              textShadow: isRunning ? `0 0 12px ${mode.glow}` : 'none',
-              transition: 'color 0.3s ease',
-            }}
-          >
-            {displayTime}
-          </span>
-          <span
-            className="text-[9px] font-medium tracking-widest uppercase ml-2"
-            style={{ color: `${mode.accent}88` }}
-          >
-            {mode.label}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span
+              className="text-3xl font-semibold tracking-wider font-mono tabular-nums leading-none"
+              style={{
+                color: isRunning ? '#FFF8E6' : isPaused ? mode.accent : 'rgba(255,248,230,0.35)',
+                textShadow: isRunning ? `0 0 16px ${mode.glow}, 0 0 32px ${mode.glow}40` : 'none',
+                transition: 'color 0.3s ease, text-shadow 0.3s ease',
+              }}
+            >
+              {displayTime}
+            </span>
+            <span
+              className="text-[10px] font-medium tracking-widest uppercase"
+              style={{ color: `${mode.accent}99` }}
+            >
+              {mode.label}
+            </span>
+          </div>
         </div>
 
         {/* Progress dots */}
@@ -524,12 +531,12 @@ export function Timer() {
         </div>
       )}
 
-      {/* ── Stats Bar (compact) ── */}
+      {/* ── Stats Bar ── */}
       <div
         className="w-full flex items-center justify-between px-2 py-1.5 rounded-xl"
         style={{
-          background: 'rgba(255,248,230,0.02)',
-          border: '1px solid rgba(255,248,230,0.03)',
+          background: 'rgba(255,248,230,0.05)',
+          border: '1px solid rgba(255,248,230,0.08)',
           ...stagger(5),
         }}
       >
