@@ -152,9 +152,9 @@ export function PetRoom({
       className="relative w-full rounded-2xl overflow-hidden"
       style={{
         height: 220,
-        background: 'linear-gradient(180deg, #2A2520 0%, #1F1C18 60%, #181614 100%)',
-        border: '1px solid rgba(255,248,230,0.06)',
-        boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.2)',
+        background: 'linear-gradient(180deg, #4A4038 0%, #3A3230 60%, #2E2A26 100%)',
+        border: '1.5px solid rgba(255,248,230,0.1)',
+        boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.15), 0 4px 24px rgba(0,0,0,0.1), 0 0 40px rgba(255,220,150,0.05)',
       }}
     >
       {/* Room background image */}
@@ -169,7 +169,7 @@ export function PetRoom({
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 20%, rgba(255,220,150,0.04) 0%, transparent 60%)',
+          background: 'radial-gradient(ellipse at 50% 20%, rgba(255,220,150,0.08) 0%, transparent 60%)',
         }}
       />
 
@@ -244,7 +244,7 @@ export function PetRoom({
             {f.id in FURNITURE_ICONS ? (
               (() => {
                 const Icon = FURNITURE_ICONS[f.id as keyof typeof FURNITURE_ICONS];
-                return <Icon size={28} color="rgba(255,248,230,0.4)" />;
+                return <Icon size={36} />;
               })()
             ) : (
               <span className="text-xl select-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
