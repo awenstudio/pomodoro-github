@@ -145,6 +145,8 @@ function getPetPosition(activity: TimerActivity): { x: number; y: number } {
   }
 }
 
+import { createAutonomyState, tickAutonomy, behaviorToAnimation, type AutonomyState } from '@/lib/pet-autonomy';
+
 function getPetAnimation(activity: TimerActivity, isRunning: boolean, override?: AnimationType | null): AnimationType {
   if (override) return override;
   if (!isRunning) return 'idle';
@@ -184,29 +186,41 @@ export function PetRoom({
   onFurnitureClick,
 }: PetRoomProps) {
   const [hoveredFurniture, setHoveredFurniture] = useState<string | null>(null);
-  const [petPos, setPetPos] = useState(getPetPosition(activity));
-  const targetPos = useRef(getPetPosition(activity));
+  const [autonomy, setAutonomy] = useState<AutonomyState>(createAutonomyState);
+  const lastTick = useRef(Date.now());
 
+  // Autonomy tick — pet wanders when timer is NOT running
   useEffect(() => {
-    targetPos.current = getPetPosition(activity);
+    if (isRunning) return; // Timer takes control
     const interval = setInterval(() => {
-      setPetPos((prev) => {
-        const tx = targetPos.current.x;
-        const ty = targetPos.current.y;
-        const dx = tx - prev.x;
-        const dy = ty - prev.y;
-        if (Math.abs(dx) < 0.4 && Math.abs(dy) < 0.4) {
-          clearInterval(interval);
-          return { x: tx, y: ty };
-        }
-        return { x: prev.x + dx * 0.08, y: prev.y + dy * 0.08 };
-      });
-    }, 50);
+      const now = Date.now();
+      const dt = (now - lastTick.current) / 1000;
+      lastTick.current = now;
+      setAutonomy((prev) => tickAutonomy(prev, dt, pet.mood, pet.hunger));
+    }, 500);
     return () => clearInterval(interval);
-  }, [activity]);
+  }, [isRunning, pet.mood, pet.hunger]);
 
-  const anim = getPetAnimation(activity, isRunning, petAnimOverride);
-  const activityCfg = ACTIVITY_CONFIG[activity];
+  // When timer starts, reset autonomy timer
+  useEffect(() => {
+    if (!isRunning) lastTick.current = Date.now();
+  }, [isRunning]);
+
+  // Position: autonomy when idle, activity-based when running
+  const petPos = isRunning
+    ? getPetPosition(activity)
+    : { x: autonomy.x * 100, y: autonomy.y * 100 };
+
+  // Animation: autonomy behavior when idle, activity-based when running
+  const anim: AnimationType = isRunning
+    ? getPetAnimation(activity, isRunning, petAnimOverride)
+    : (behaviorToAnimation(autonomy.behavior) as AnimationType);
+
+  // Bubble: autonomy bubble when idle, reaction when running
+  const bubble = isRunning ? petReaction : autonomy.bubble;
+  const activityCfg = isRunning
+    ? ACTIVITY_CONFIG[activity]
+    : { label: autonomy.behavior === 'walking' ? 'Wandering' : autonomy.behavior.charAt(0).toUpperCase() + autonomy.behavior.slice(1), dot: 'rgba(255,248,230,0.35)' };
 
   return (
     <div
@@ -421,8 +435,8 @@ export function PetRoom({
           />
         </div>
 
-        {/* Reaction bubble */}
-        {petReaction && (
+        {/* Reaction / Thought bubble */}
+        {bubble && (
           <div
             className="absolute left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-xl whitespace-nowrap z-20"
             style={{
@@ -437,7 +451,7 @@ export function PetRoom({
               animation: 'rewardSlideUp 0.2s ease-out',
             }}
           >
-            {petReaction}
+            {bubble}
             <div
               style={{
                 position: 'absolute', left: '50%', transform: 'translateX(-50%) rotate(45deg)',
