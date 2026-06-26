@@ -8,6 +8,7 @@
 import { useTimer } from '../hooks/useTimer';
 import { Heatmap } from './Heatmap';
 import { Achievements } from './Achievements';
+import { PetDiary } from './PetDiary';
 import { loadDailyStats } from '@/lib/storage';
 import { useState, useEffect, useRef } from 'react';
 import type { DailyStats } from '@/types';
@@ -52,8 +53,9 @@ function AnimatedCounter({
 /* ── Main Stats Component ──────────────────────────── */
 
 export function Stats() {
-  const { dailyStats, streak, progress, settings } = useTimer();
+  const { dailyStats, streak, progress, settings, pet } = useTimer();
   const [allStats, setAllStats] = useState<Record<string, DailyStats>>({});
+  const [subTab, setSubTab] = useState<'stats' | 'diary'>('stats');
 
   useEffect(() => {
     loadDailyStats().then(setAllStats);
@@ -103,6 +105,30 @@ export function Stats() {
 
   return (
     <div className="flex flex-col gap-3 py-2">
+      {/* Sub-tabs */}
+      <div className="flex gap-1 px-1">
+        {([['stats', '📊 Stats'], ['diary', '📖 Diary']] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setSubTab(id)}
+            className="px-3 py-1 rounded-xl text-[10px] font-display font-medium transition-all duration-200"
+            style={{
+              background: subTab === id ? 'rgba(255,248,230,0.08)' : 'transparent',
+              color: subTab === id ? '#FFF8E6' : 'rgba(255,248,230,0.3)',
+              border: subTab === id ? '1px solid rgba(255,248,230,0.1)' : '1px solid transparent',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === 'diary' && pet ? (
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,248,230,0.03)', border: '1px solid rgba(255,248,230,0.06)', height: 380 }}>
+          <PetDiary pet={pet} />
+        </div>
+      ) : (
+      <>
       {/* ── Today's Summary Card ── */}
       <div
         className="rounded-2xl p-4 relative overflow-hidden"
@@ -228,6 +254,8 @@ export function Stats() {
       <div style={stagger(4)}>
         <Achievements dailyStats={allStats} streak={streak} />
       </div>
+      </>
+      )}
     </div>
   );
 }
