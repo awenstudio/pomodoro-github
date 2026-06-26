@@ -18,6 +18,7 @@ import type {
 import type { Pet, PetSpecies, PetPersonality } from '@/lib/pet-system';
 import { STAGE_XP_REQUIREMENTS } from '@/lib/pet-system';
 import { executeInteraction, applyStatDecay, applyIdleDecay, type CooldownState } from '@/lib/pet-interaction';
+import { calculateCoins, addCoins, loadCoins } from '@/lib/store';
 import { createInitialState, timerReducer } from '@/lib/timer-engine';
 import {
   loadTimerState,
@@ -179,6 +180,10 @@ async function handleTick(): Promise<void> {
             forgivenessCardsDate: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsDate : todayStr,
             forgivenessCardsUsed: prog.forgivenessCardsDate === todayStr ? prog.forgivenessCardsUsed : 0,
           }));
+
+          // ── Coin rewards ──
+          const coinsEarned = calculateCoins(levelInfo.level, newStreak.current);
+          await addCoins(coinsEarned);
 
           // ── Pet rewards ──
           const pet = await loadPet();
@@ -531,6 +536,17 @@ async function handleMessage(msg: MessageType): Promise<MessageResponse> {
       updateBadge(currentState);
       stopTickAlarm();
       return { success: true };
+    }
+
+    case 'GET_COINS': {
+      const coins = await loadCoins();
+      return { success: true, data: coins };
+    }
+
+    case 'ADD_COINS': {
+      const amount = (effect as { amount?: number }).amount || 0;
+      const newBalance = await addCoins(amount);
+      return { success: true, data: newBalance };
     }
 
     default:

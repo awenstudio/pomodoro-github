@@ -144,7 +144,9 @@ export type MessageType =
   | { type: 'SYNC_NOW' }
   | { type: 'GET_STATS' }
   | { type: 'CLEAR_DATA' }
-  | { type: 'SWITCH_SESSION'; sessionType: SessionType };
+  | { type: 'SWITCH_SESSION'; sessionType: SessionType }
+  | { type: 'GET_COINS' }
+  | { type: 'ADD_COINS'; amount: number };
 
 export interface MessageResponse<T = unknown> {
   success: boolean;

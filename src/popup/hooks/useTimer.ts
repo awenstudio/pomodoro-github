@@ -212,6 +212,11 @@ export function useTimer() {
     return response;
   }, []);
 
+  const getCoins = useCallback(async () => {
+    const response = await sendMessage({ type: 'GET_COINS' });
+    return response.success ? (response.data as number) : 0;
+  }, []);
+
   return {
     ...store,
     start,
@@ -229,5 +234,6 @@ export function useTimer() {
     feedPet,
     playWithPet,
     petPet,
+    getCoins,
   };
 }

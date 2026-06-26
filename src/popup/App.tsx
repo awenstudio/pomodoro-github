@@ -19,7 +19,6 @@ import { KeyboardHints } from './components/KeyboardHints';
 import { useTimer } from './hooks/useTimer';
 
 const STORAGE_KEY_ONBOARDED = 'pomodoro_onboarded';
-const STORAGE_KEY_COINS = 'pawodoro_coins';
 
 export default function App() {
   const [activePage, setActivePage] = useState<PageId>('timer');
@@ -34,10 +33,11 @@ export default function App() {
   /* ── Load state ──────────────────────────────────── */
 
   useEffect(() => {
-    chrome.storage.local.get([STORAGE_KEY_ONBOARDED, STORAGE_KEY_COINS], (result) => {
+    chrome.storage.local.get([STORAGE_KEY_ONBOARDED], (result) => {
       setOnboarded(!!result[STORAGE_KEY_ONBOARDED]);
-      setCoins(result[STORAGE_KEY_COINS] || 0);
     });
+    // Load coins from background
+    timer.getCoins().then((c) => setCoins(c));
   }, []);
 
   // Entrance animation
@@ -72,7 +72,6 @@ export default function App() {
 
   const saveCoins = useCallback(async (newCoins: number) => {
     setCoins(newCoins);
-    await chrome.storage.local.set({ [STORAGE_KEY_COINS]: newCoins });
   }, []);
 
   const handleShopBuy = useCallback((_itemId: string, newBalance: number) => {

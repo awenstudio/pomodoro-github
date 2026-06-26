@@ -109,6 +109,27 @@ export function calculateCoins(level: number, streak: number): number {
   return Math.round(base * levelMult * streakMult);
 }
 
+const COINS_KEY = 'pawodoro_coins';
+
+/** Load coins from storage. */
+export async function loadCoins(): Promise<number> {
+  const result = await chrome.storage.local.get(COINS_KEY);
+  return (result[COINS_KEY] as number) || 0;
+}
+
+/** Save coins to storage. */
+export async function saveCoins(coins: number): Promise<void> {
+  await chrome.storage.local.set({ [COINS_KEY]: coins });
+}
+
+/** Add coins (e.g. after pomodoro). Returns new balance. */
+export async function addCoins(amount: number): Promise<number> {
+  const current = await loadCoins();
+  const newBalance = current + amount;
+  await saveCoins(newBalance);
+  return newBalance;
+}
+
 /* ── Inventory Functions ───────────────────────────── */
 
 const INVENTORY_KEY = 'pawodoro_inventory';
